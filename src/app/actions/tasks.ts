@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { classifyTaskStats } from "@/lib/ai";
 
 async function getUser() {
   const supabase = await createClient();
@@ -63,6 +64,8 @@ export async function createTask(content: string) {
   if (content.toLowerCase().includes("easy") || content.toLowerCase().includes("quick")) difficulty = "low";
   if (content.toLowerCase().includes("hard") || content.toLowerCase().includes("complex")) difficulty = "high";
 
+  const weights = await classifyTaskStats(content);
+
   const supabase = await createClient();
   await supabase
     .from('tasks')
@@ -72,6 +75,12 @@ export async function createTask(content: string) {
       priority,
       difficulty,
       status: "todo",
+      str_weight: weights.str,
+      int_weight: weights.int,
+      dis_weight: weights.dis,
+      cha_weight: weights.cha,
+      cre_weight: weights.cre,
+      spi_weight: weights.spi,
     });
 
   revalidatePath("/dashboard");
@@ -104,11 +113,25 @@ export async function toggleTaskStatus(taskId: string) {
     .eq('id', taskId);
 
   if (newStatus === "completed") {
-    const xpAmount = task.difficulty === "high" ? 5 : task.difficulty === "medium" ? 3 : 1;
+    const difficultyMultiplier = task.difficulty === "high" ? 3 : task.difficulty === "medium" ? 2 : 1;
+
+    const gains = {
+      strength_xp:    (task.str_weight ?? 0) * difficultyMultiplier,
+      intellect_xp:   (task.int_weight ?? 0) * difficultyMultiplier,
+      discipline_xp:  (task.dis_weight ?? 0) * difficultyMultiplier,
+      charisma_xp:    (task.cha_weight ?? 0) * difficultyMultiplier,
+      creativity_xp:  (task.cre_weight ?? 0) * difficultyMultiplier,
+      spirituality_xp:(task.spi_weight ?? 0) * difficultyMultiplier,
+    };
+
+    // Ensure at least 1 discipline XP so completing always rewards something
+    if (Object.values(gains).every(v => v === 0)) {
+      gains.discipline_xp = 1;
+    }
 
     const { data: userData } = await supabase
       .from('user')
-      .select('discipline_xp')
+      .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp')
       .eq('id', user.id)
       .single();
 
@@ -116,20 +139,30 @@ export async function toggleTaskStatus(taskId: string) {
       await supabase
         .from('user')
         .update({
-          discipline_xp: (userData.discipline_xp ?? 0) + xpAmount,
+          strength_xp:    (userData.strength_xp    ?? 0) + gains.strength_xp,
+          intellect_xp:   (userData.intellect_xp   ?? 0) + gains.intellect_xp,
+          discipline_xp:  (userData.discipline_xp  ?? 0) + gains.discipline_xp,
+          charisma_xp:    (userData.charisma_xp    ?? 0) + gains.charisma_xp,
+          creativity_xp:  (userData.creativity_xp  ?? 0) + gains.creativity_xp,
+          spirituality_xp:(userData.spirituality_xp ?? 0) + gains.spirituality_xp,
           updatedAt: new Date().toISOString(),
         })
         .eq('id', user.id);
     }
 
+    const gainsSummary = Object.entries(gains)
+      .filter(([, v]) => v > 0)
+      .map(([k, v]) => `+${v} ${k.replace('_xp', '')}`)
+      .join(', ');
+
     await supabase
       .from('logs')
       .insert({
         user_id: user.id,
-        content: `Completed task: ${task.content}`,
+        content: `Completed task: ${task.content} (${gainsSummary})`,
         activity_type: "Task",
         difficulty: task.difficulty,
-        discipline_gain: xpAmount,
+        discipline_gain: gains.discipline_xp,
       });
   }
 
