@@ -1,9 +1,6 @@
 "use server";
 
-import { db } from "@/lib/db";
-import { user as userTable } from "@/db/schema";
 import { createClient } from "@/utils/supabase/server";
-import { eq } from "drizzle-orm";
 
 export async function getOnboardingRedirect(): Promise<"/dashboard" | "/onboarding"> {
   const supabase = await createClient();
@@ -11,11 +8,11 @@ export async function getOnboardingRedirect(): Promise<"/dashboard" | "/onboardi
 
   if (!user) return "/onboarding";
 
-  const [dbUser] = await db
-    .select({ onboardingCompleted: userTable.onboardingCompleted })
-    .from(userTable)
-    .where(eq(userTable.id, user.id))
-    .limit(1);
+  const { data: userData } = await supabase
+    .from('user')
+    .select('onboarding_completed')
+    .eq('id', user.id)
+    .single();
 
-  return dbUser?.onboardingCompleted ? "/dashboard" : "/onboarding";
+  return userData?.onboarding_completed ? "/dashboard" : "/onboarding";
 }
