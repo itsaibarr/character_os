@@ -1,9 +1,6 @@
 "use server";
 
-import { db } from "@/lib/db";
-import { user as userTable, userAnalytics } from "@/db/schema";
 import { createClient } from "@/utils/supabase/server";
-import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 export async function completeOnboarding(data: {
@@ -40,30 +37,33 @@ export async function completeOnboarding(data: {
   if (data.focusAreas.includes('Communication')) weights.charisma += 1;
   if (data.focusAreas.includes('Personal Projects')) weights.creativity += 1;
 
-  await db.update(userTable)
-    .set({
+  await supabase
+    .from('user')
+    .update({
       archetype: data.archetype,
-      statWeights: weights,
-      frictionProfile: data.frictionProfile,
-      dailyCapacity: data.dailyCapacity,
-      feedbackPreference: data.feedbackPreference,
-      mainGoal: data.mainGoal,
-      onboardingCompleted: true,
-      updatedAt: new Date()
+      stat_weights: weights,
+      friction_profile: data.frictionProfile,
+      daily_capacity: data.dailyCapacity,
+      feedback_pref: data.feedbackPreference,
+      main_goal: data.mainGoal,
+      onboarding_completed: true,
+      updatedAt: new Date().toISOString(),
     })
-    .where(eq(userTable.id, user.id));
+    .eq('id', user.id);
 
-  await db.insert(userAnalytics).values({
-    userId: user.id,
-    focusAreas: data.focusAreas,
-    frustrations: [data.frictionProfile],
-    focusedHours: data.dailyCapacity,
-    motivationPreference: data.feedbackPreference,
-    trackingTools: data.trackingTools,
-    acquisitionSource: data.acquisitionSource,
-    triggerReason: data.triggerReason,
-    initialGoal: data.mainGoal,
-  });
+  await supabase
+    .from('user_analytics')
+    .insert({
+      user_id: user.id,
+      focus_areas: data.focusAreas,
+      frustrations: [data.frictionProfile],
+      focused_hours: data.dailyCapacity,
+      motivation_preference: data.feedbackPreference,
+      tracking_tools: data.trackingTools,
+      acquisition_source: data.acquisitionSource,
+      trigger_reason: data.triggerReason,
+      initial_goal: data.mainGoal,
+    });
 
   redirect("/dashboard");
 }

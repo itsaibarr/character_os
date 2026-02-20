@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
-import { db } from '@/lib/db'
-import { user as userTable } from '@/db/schema'
-import { eq } from 'drizzle-orm'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -17,12 +14,12 @@ export async function GET(request: Request) {
 
       let destination = '/onboarding'
       if (user) {
-        const [dbUser] = await db
-          .select({ onboardingCompleted: userTable.onboardingCompleted })
-          .from(userTable)
-          .where(eq(userTable.id, user.id))
-          .limit(1)
-        if (dbUser?.onboardingCompleted) {
+        const { data: dbUser } = await supabase
+          .from('user')
+          .select('onboarding_completed')
+          .eq('id', user.id)
+          .single()
+        if (dbUser?.onboarding_completed) {
           destination = '/dashboard'
         }
       }

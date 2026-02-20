@@ -1,9 +1,6 @@
 "use server";
 
-import { db } from "@/lib/db";
-import { tasks as tasksTable, logs as logsTable, user as userTable } from "@/db/schema";
 import { createClient } from "@/utils/supabase/server";
-import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 async function getUser() {
@@ -16,40 +13,42 @@ export async function getTasks() {
   const user = await getUser();
   if (!user) return [];
 
-  try {
-    return await db.select()
-      .from(tasksTable)
-      .where(eq(tasksTable.userId, user.id))
-      .orderBy(desc(tasksTable.createdAt));
-  } catch (error: any) {
-    console.error("Drizzle Select Error in getTasks:", error);
-    if (error.cause) console.error("Underlying Cause:", error.cause);
-    throw error;
-  }
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  return data ?? [];
 }
 
 export async function getUserStats() {
   const user = await getUser();
   if (!user) return null;
 
-  const [userData] = await db.select()
-    .from(userTable)
-    .where(eq(userTable.id, user.id))
-    .limit(1);
+  const supabase = await createClient();
+  const { data: userData } = await supabase
+    .from('user')
+    .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp')
+    .eq('id', user.id)
+    .single();
 
   if (!userData) return null;
 
+  const { strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp } = userData;
+
   return {
     stats: {
-      strength: userData.strengthXp || 0,
-      intellect: userData.intellectXp || 0,
-      discipline: userData.disciplineXp || 0,
-      charisma: userData.charismaXp || 0,
-      creativity: userData.creativityXp || 0,
-      spirituality: userData.spiritualityXp || 0,
+      strength: strength_xp ?? 0,
+      intellect: intellect_xp ?? 0,
+      discipline: discipline_xp ?? 0,
+      charisma: charisma_xp ?? 0,
+      creativity: creativity_xp ?? 0,
+      spirituality: spirituality_xp ?? 0,
     },
-    level: Math.floor((userData.strengthXp! + userData.intellectXp! + userData.disciplineXp! + userData.charismaXp! + userData.creativityXp! + userData.spiritualityXp!) / 60) + 1,
-    xpProgress: Math.min(100, (userData.strengthXp! % 10 + userData.intellectXp! % 10 + userData.disciplineXp! % 10) * 3)
+    level: Math.floor(((strength_xp ?? 0) + (intellect_xp ?? 0) + (discipline_xp ?? 0) + (charisma_xp ?? 0) + (creativity_xp ?? 0) + (spirituality_xp ?? 0)) / 60) + 1,
+    xpProgress: Math.min(100, ((strength_xp ?? 0) % 10 + (intellect_xp ?? 0) % 10 + (discipline_xp ?? 0) % 10) * 3),
   };
 }
 
@@ -64,13 +63,16 @@ export async function createTask(content: string) {
   if (content.toLowerCase().includes("easy") || content.toLowerCase().includes("quick")) difficulty = "low";
   if (content.toLowerCase().includes("hard") || content.toLowerCase().includes("complex")) difficulty = "high";
 
-  await db.insert(tasksTable).values({
-    userId: user.id,
-    content,
-    priority,
-    difficulty,
-    status: "todo",
-  });
+  const supabase = await createClient();
+  await supabase
+    .from('tasks')
+    .insert({
+      user_id: user.id,
+      content,
+      priority,
+      difficulty,
+      status: "todo",
+    });
 
   revalidatePath("/dashboard");
 }
@@ -79,47 +81,56 @@ export async function toggleTaskStatus(taskId: string) {
   const user = await getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const [task] = await db.select()
-    .from(tasksTable)
-    .where(and(eq(tasksTable.id, taskId), eq(tasksTable.userId, user.id)))
-    .limit(1);
+  const supabase = await createClient();
+
+  const { data: task } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('id', taskId)
+    .eq('user_id', user.id)
+    .single();
 
   if (!task) throw new Error("Task not found");
 
   const newStatus = task.status === "completed" ? "todo" : "completed";
 
-  await db.update(tasksTable)
-    .set({
+  await supabase
+    .from('tasks')
+    .update({
       status: newStatus,
-      completedAt: newStatus === "completed" ? new Date() : null,
-      updatedAt: new Date()
+      completed_at: newStatus === "completed" ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
     })
-    .where(eq(tasksTable.id, taskId));
+    .eq('id', taskId);
 
   if (newStatus === "completed") {
-    const xpAmount = task.difficulty === "high" ? 5 : (task.difficulty === "medium" ? 3 : 1);
+    const xpAmount = task.difficulty === "high" ? 5 : task.difficulty === "medium" ? 3 : 1;
 
-    const [userData] = await db.select()
-      .from(userTable)
-      .where(eq(userTable.id, user.id))
-      .limit(1);
+    const { data: userData } = await supabase
+      .from('user')
+      .select('discipline_xp')
+      .eq('id', user.id)
+      .single();
 
     if (userData) {
-      await db.update(userTable)
-        .set({
-          disciplineXp: (userData.disciplineXp || 0) + xpAmount,
-          updatedAt: new Date()
+      await supabase
+        .from('user')
+        .update({
+          discipline_xp: (userData.discipline_xp ?? 0) + xpAmount,
+          updatedAt: new Date().toISOString(),
         })
-        .where(eq(userTable.id, user.id));
+        .eq('id', user.id);
     }
 
-    await db.insert(logsTable).values({
-      userId: user.id,
-      content: `Completed task: ${task.content}`,
-      activityType: "Task",
-      difficulty: task.difficulty,
-      disciplineGain: xpAmount,
-    });
+    await supabase
+      .from('logs')
+      .insert({
+        user_id: user.id,
+        content: `Completed task: ${task.content}`,
+        activity_type: "Task",
+        difficulty: task.difficulty,
+        discipline_gain: xpAmount,
+      });
   }
 
   revalidatePath("/dashboard");

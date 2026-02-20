@@ -1,7 +1,4 @@
 import { createClient } from "@/utils/supabase/server";
-import { db } from "@/lib/db";
-import { user as userTable } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import OnboardingForm from "./OnboardingForm";
 
@@ -11,13 +8,13 @@ export default async function OnboardingPage() {
 
   if (!user) redirect("/sign-in");
 
-  const [dbUser] = await db
-    .select({ onboardingCompleted: userTable.onboardingCompleted })
-    .from(userTable)
-    .where(eq(userTable.id, user.id))
-    .limit(1);
+  const { data: dbUser } = await supabase
+    .from('user')
+    .select('onboarding_completed')
+    .eq('id', user.id)
+    .single();
 
-  if (dbUser?.onboardingCompleted) redirect("/dashboard");
+  if (dbUser?.onboarding_completed) redirect("/dashboard");
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center py-12">
