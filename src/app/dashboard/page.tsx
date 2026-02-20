@@ -1,9 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getUserStats } from "../actions/tasks";
 import StatGrid from "@/components/dashboard/StatGrid";
 import AppHeader from "@/components/AppHeader";
 import CharacterDisplay from "@/components/dashboard/CharacterDisplay";
+import DashboardCommandWrapper from "@/components/dashboard/DashboardCommandWrapper";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -31,11 +33,30 @@ export default async function DashboardPage() {
         </section>
 
         <section>
+          <DashboardCommandWrapper />
+        </section>
+
+        <section>
           <StatGrid
             stats={userStats.stats}
             level={userStats.level}
             xpProgress={userStats.xpProgress}
           />
+        </section>
+
+        <section className="flex items-center justify-center space-x-4 pt-4">
+          <Link
+            href="/tasks"
+            className="px-4 py-2 text-sm font-medium text-[#0056D2] bg-white border border-[#0056D2] rounded-lg hover:bg-[#0056D2] hover:text-white transition-colors"
+          >
+            View All Tasks
+          </Link>
+          <Link
+            href="/radar"
+            className="px-4 py-2 text-sm font-medium text-[#0056D2] bg-white border border-[#0056D2] rounded-lg hover:bg-[#0056D2] hover:text-white transition-colors"
+          >
+            View Full Radar
+          </Link>
         </section>
       </main>
     </div>
