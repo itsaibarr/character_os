@@ -27,7 +27,7 @@ interface StatGridProps {
 
 // ─── Radar Chart ─────────────────────────────────────────────────────────────
 
-const SIZE = 220;
+const SIZE = 240;
 const CX = SIZE / 2;
 const CY = SIZE / 2;
 const R = 80;
@@ -128,7 +128,7 @@ function RadarChart({ values }: { values: number[] }) {
 
       {/* Axis labels */}
       {AXES.map((axis, i) => {
-        const [lx, ly] = vertex(CX, CY, R + 18, i);
+        const [lx, ly] = vertex(CX, CY, R + 22, i);
         const angle = -90 + i * 60;
         const textAnchor =
           angle === -90 || angle === 90 ? "middle" : angle < 0 || angle > 90 ? "end" : "start";
