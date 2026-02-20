@@ -29,11 +29,11 @@ const focusOptions = [
 ];
 
 const archetypeOptions = [
-  { id: "Builder", icon: Laptop, label: "Builder", description: "Creators, Coders, Makers" },
-  { id: "Scholar", icon: Brain, label: "Scholar", description: "Learners, Researchers, Students" },
-  { id: "Operator", icon: Focus, label: "Operator", description: "Managers, Executors, Optimizers" },
-  { id: "Athlete", icon: Dumbbell, label: "Athlete", description: "Movers, Competitors, Health-conscious" },
-  { id: "Leader", icon: User, label: "Leader", description: "Founders, Guides, Visionaries" },
+  { id: "Builder", icon: Laptop, label: "Builder" },
+  { id: "Scholar", icon: Brain, label: "Scholar" },
+  { id: "Operator", icon: Focus, label: "Operator" },
+  { id: "Athlete", icon: Dumbbell, label: "Athlete" },
+  { id: "Leader", icon: User, label: "Leader" },
 ];
 
 const frictionOptions = [
@@ -104,6 +104,12 @@ export default function OnboardingForm() {
     }
   };
 
+  // Used by single-select steps to set state and immediately advance
+  const selectAndAdvance = (update: Partial<typeof formData>) => {
+    setFormData((prev) => ({ ...prev, ...update }));
+    setCurrentStep((prev) => prev + 1);
+  };
+
   const toggleSelection = (field: "focusAreas" | "trackingTools", value: string) => {
     setFormData((prev) => {
       const current = prev[field];
@@ -132,10 +138,10 @@ export default function OnboardingForm() {
   };
 
   return (
-    <div className="max-w-xl mx-auto w-full px-6 py-12">
-      <div className="mb-12">
+    <div className="max-w-xl mx-auto w-full px-6 py-6">
+      <div className="mb-6">
         <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-          <motion.div 
+          <motion.div
             className="h-full bg-primary shadow-[0_0_15px_rgba(0,86,210,0.4)]"
             initial={{ width: "0%" }}
             animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
@@ -151,219 +157,217 @@ export default function OnboardingForm() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="space-y-8"
+          className="space-y-6"
         >
-          <div className="space-y-3">
-            <h1 className="text-4xl font-bold tracking-tight text-slate-900">{steps[currentStep].title}</h1>
-            <p className="text-slate-500 text-xl font-medium">{steps[currentStep].subtitle}</p>
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{steps[currentStep].title}</h1>
+            <p className="text-slate-500 text-base font-medium">{steps[currentStep].subtitle}</p>
           </div>
 
-          <div className="min-h-[300px]">
+          <div>
             {currentStep === 0 && (
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {focusOptions.map((option) => (
-                    <motion.button
-                      key={option.id}
-                      variants={itemVariants}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => toggleSelection("focusAreas", option.id)}
-                      className={clsx(
-                        "p-4 rounded-xl border text-left flex items-center space-x-3 transition-all",
-                        formData.focusAreas.includes(option.id)
-                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                          : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
-                      )}
-                    >
-                      <option.icon className={clsx("w-5 h-5", formData.focusAreas.includes(option.id) ? "text-white" : "text-primary")} />
-                      <span className="font-semibold">{option.label}</span>
-                    </motion.button>
-                  ))}
-                </motion.div>
+              <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {focusOptions.map((option) => (
+                  <motion.button
+                    key={option.id}
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => toggleSelection("focusAreas", option.id)}
+                    className={clsx(
+                      "p-3 rounded-xl border text-left flex items-center space-x-3 transition-all",
+                      formData.focusAreas.includes(option.id)
+                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                    )}
+                  >
+                    <option.icon className={clsx("w-5 h-5", formData.focusAreas.includes(option.id) ? "text-white" : "text-primary")} />
+                    <span className="font-semibold">{option.label}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
             )}
 
             {currentStep === 1 && (
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 gap-3">
-                  {archetypeOptions.map((option) => (
-                    <motion.button
-                      key={option.id}
-                      variants={itemVariants}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      onClick={() => setFormData({ ...formData, archetype: option.id })}
-                      className={clsx(
-                        "p-5 rounded-xl border text-left flex items-center space-x-4 transition-all",
-                        formData.archetype === option.id
-                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                          : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
-                      )}
-                    >
-                      <div className={clsx("p-3 rounded-lg transition-colors", formData.archetype === option.id ? "bg-white/20" : "bg-secondary")}>
-                        <option.icon className={clsx("w-6 h-6", formData.archetype === option.id ? "text-white" : "text-primary")} />
-                      </div>
-                      <div>
-                        <div className="font-bold text-base uppercase tracking-wider">{option.label}</div>
-                        <div className={clsx("text-sm font-medium", formData.archetype === option.id ? "text-white/70" : "text-slate-500")}>
-                          {option.description}
-                        </div>
-                      </div>
-                    </motion.button>
-                  ))}
-                </motion.div>
+              <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-2 gap-3">
+                {archetypeOptions.map((option) => (
+                  <motion.button
+                    key={option.id}
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => selectAndAdvance({ archetype: option.id })}
+                    className={clsx(
+                      "p-3 rounded-xl border text-left flex items-center space-x-3 transition-all",
+                      formData.archetype === option.id
+                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                    )}
+                  >
+                    <div className={clsx("p-2 rounded-lg transition-colors", formData.archetype === option.id ? "bg-white/20" : "bg-secondary")}>
+                      <option.icon className={clsx("w-5 h-5", formData.archetype === option.id ? "text-white" : "text-primary")} />
+                    </div>
+                    <span className="font-bold text-sm uppercase tracking-wider">{option.label}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
             )}
 
             {currentStep === 2 && (
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-3">
-                  {frictionOptions.map((option) => (
-                    <motion.button
-                      key={option}
-                      variants={itemVariants}
-                      onClick={() => setFormData({ ...formData, frictionProfile: option })}
-                      className={clsx(
-                        "w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all",
-                        formData.frictionProfile === option
-                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                          : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
-                      )}
-                    >
-                      <span className="font-semibold">{option}</span>
-                      {formData.frictionProfile === option && <Check className="w-5 h-5" />}
-                    </motion.button>
-                  ))}
-                </motion.div>
+              <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-2">
+                {frictionOptions.map((option) => (
+                  <motion.button
+                    key={option}
+                    variants={itemVariants}
+                    onClick={() => selectAndAdvance({ frictionProfile: option })}
+                    className={clsx(
+                      "w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all",
+                      formData.frictionProfile === option
+                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                    )}
+                  >
+                    <span className="font-semibold">{option}</span>
+                    {formData.frictionProfile === option && <Check className="w-5 h-5" />}
+                  </motion.button>
+                ))}
+              </motion.div>
             )}
 
             {currentStep === 3 && (
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 gap-3">
-                  {capacityOptions.map((option) => (
-                    <motion.button
-                      key={option}
-                      variants={itemVariants}
-                      onClick={() => setFormData({ ...formData, dailyCapacity: option })}
-                      className={clsx(
-                        "p-5 rounded-xl border text-center transition-all",
-                        formData.dailyCapacity === option
-                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                          : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
-                      )}
-                    >
-                      <span className="font-semibold">{option}</span>
-                    </motion.button>
-                  ))}
-                </motion.div>
+              <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 gap-2">
+                {capacityOptions.map((option) => (
+                  <motion.button
+                    key={option}
+                    variants={itemVariants}
+                    onClick={() => selectAndAdvance({ dailyCapacity: option })}
+                    className={clsx(
+                      "p-3 rounded-xl border text-center transition-all",
+                      formData.dailyCapacity === option
+                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                    )}
+                  >
+                    <span className="font-semibold">{option}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
             )}
 
             {currentStep === 4 && (
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 gap-3">
-                  {feedbackOptions.map((option) => (
-                    <motion.button
-                      key={option}
-                      variants={itemVariants}
-                      onClick={() => setFormData({ ...formData, feedbackPreference: option })}
-                      className={clsx(
-                        "p-4 rounded-xl border text-left transition-all",
-                        formData.feedbackPreference === option
-                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                          : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
-                      )}
-                    >
-                      <span className="font-semibold">{option}</span>
-                    </motion.button>
-                  ))}
-                </motion.div>
+              <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 gap-2">
+                {feedbackOptions.map((option) => (
+                  <motion.button
+                    key={option}
+                    variants={itemVariants}
+                    onClick={() => selectAndAdvance({ feedbackPreference: option })}
+                    className={clsx(
+                      "p-3 rounded-xl border text-left transition-all",
+                      formData.feedbackPreference === option
+                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                    )}
+                  >
+                    <span className="font-semibold">{option}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
             )}
 
             {currentStep === 5 && (
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {stackOptions.map((option) => (
-                    <motion.button
-                      key={option}
-                      variants={itemVariants}
-                      onClick={() => toggleSelection("trackingTools", option)}
-                      className={clsx(
-                        "p-4 rounded-xl border text-center transition-all",
-                        formData.trackingTools.includes(option)
-                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                          : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
-                      )}
-                    >
-                      <span className="font-semibold">{option}</span>
-                    </motion.button>
-                  ))}
-                </motion.div>
+              <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {stackOptions.map((option) => (
+                  <motion.button
+                    key={option}
+                    variants={itemVariants}
+                    onClick={() => toggleSelection("trackingTools", option)}
+                    className={clsx(
+                      "p-3 rounded-xl border text-center transition-all",
+                      formData.trackingTools.includes(option)
+                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                    )}
+                  >
+                    <span className="font-semibold">{option}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
             )}
 
             {currentStep === 6 && (
-                <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 gap-3">
-                  {acquisitionOptions.map((option) => (
-                    <motion.button
-                      key={option}
-                      variants={itemVariants}
-                      onClick={() => setFormData({ ...formData, acquisitionSource: option })}
-                      className={clsx(
-                        "p-4 rounded-xl border text-left transition-all",
-                        formData.acquisitionSource === option
-                          ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                          : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
-                      )}
-                    >
-                      <span className="font-semibold">{option}</span>
-                    </motion.button>
-                  ))}
-                </motion.div>
+              <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 gap-2">
+                {acquisitionOptions.map((option) => (
+                  <motion.button
+                    key={option}
+                    variants={itemVariants}
+                    onClick={() => selectAndAdvance({ acquisitionSource: option })}
+                    className={clsx(
+                      "p-3 rounded-xl border text-left transition-all",
+                      formData.acquisitionSource === option
+                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
+                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                    )}
+                  >
+                    <span className="font-semibold">{option}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
             )}
 
             {currentStep === 7 && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                  <textarea
-                    autoFocus
-                    rows={4}
-                    value={formData.triggerReason}
-                    onChange={(e) => setFormData({ ...formData, triggerReason: e.target.value })}
-                    className="w-full p-5 rounded-2xl border border-slate-200 bg-white text-lg font-medium focus:ring-4 focus:ring-[var(--color-primary-ring)] focus:border-primary outline-none transition-all resize-none shadow-sm"
-                    placeholder="e.g. I realized my previous system was too bloated and I needed something cleaner..."
-                  />
-                  <p className="text-slate-400 text-sm">Min. 6 characters required to continue.</p>
-                </motion.div>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+                <textarea
+                  autoFocus
+                  rows={4}
+                  value={formData.triggerReason}
+                  onChange={(e) => setFormData({ ...formData, triggerReason: e.target.value })}
+                  className="w-full p-4 rounded-2xl border border-slate-200 bg-white text-base font-medium focus:ring-4 focus:ring-[var(--color-primary-ring)] focus:border-primary outline-none transition-all resize-none shadow-sm"
+                  placeholder="e.g. I realized my previous system was too bloated and I needed something cleaner..."
+                />
+                <p className="text-slate-400 text-sm">Min. 6 characters required to continue.</p>
+              </motion.div>
             )}
 
             {currentStep === 8 && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                  <textarea
-                    autoFocus
-                    rows={4}
-                    value={formData.mainGoal}
-                    onChange={(e) => setFormData({ ...formData, mainGoal: e.target.value })}
-                    className="w-full p-5 rounded-2xl border border-slate-200 bg-white text-lg font-medium focus:ring-4 focus:ring-[var(--color-primary-ring)] focus:border-primary outline-none transition-all resize-none shadow-sm"
-                    placeholder="e.g. Build my first profitable SaaS application while staying healthy."
-                  />
-                  <p className="text-slate-400 text-sm">Be specific. This defines your character path.</p>
-                </motion.div>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+                <textarea
+                  autoFocus
+                  rows={4}
+                  value={formData.mainGoal}
+                  onChange={(e) => setFormData({ ...formData, mainGoal: e.target.value })}
+                  className="w-full p-4 rounded-2xl border border-slate-200 bg-white text-base font-medium focus:ring-4 focus:ring-[var(--color-primary-ring)] focus:border-primary outline-none transition-all resize-none shadow-sm"
+                  placeholder="e.g. Build my first profitable SaaS application while staying healthy."
+                />
+                <p className="text-slate-400 text-sm">Be specific. This defines your character path.</p>
+              </motion.div>
             )}
           </div>
 
-          <div className="pt-12 flex justify-between items-center">
+          <div className="pt-6 flex justify-between items-center">
             <button
               onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
               className={clsx("text-slate-400 font-bold hover:text-slate-600 transition-colors", currentStep === 0 && "invisible")}
             >
               Back
             </button>
-            <motion.button
-              whileHover={isStepValid() && !isSubmitting ? { scale: 1.05, x: 5 } : {}}
-              whileTap={isStepValid() && !isSubmitting ? { scale: 0.95 } : {}}
-              onClick={handleNext}
-              disabled={!isStepValid() || isSubmitting}
-              className={clsx(
-                "group flex items-center space-x-3 px-10 py-5 rounded-full font-bold transition-all shadow-xl",
-                isStepValid() && !isSubmitting
-                  ? "bg-primary text-white hover:bg-primary-hover shadow-primary/20"
-                  : "bg-slate-100 text-slate-400 cursor-not-allowed"
-              )}
-            >
-              <span className="text-lg">{currentStep === steps.length - 1 ? (isSubmitting ? "Awakening..." : "Initialize Profile") : "Next Phase"}</span>
-              {!isSubmitting && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
-            </motion.button>
+            {/* Next button hidden for auto-advance steps (1,2,3,4,6) — they advance on selection */}
+            {![1, 2, 3, 4, 6].includes(currentStep) && (
+              <motion.button
+                whileHover={isStepValid() && !isSubmitting ? { scale: 1.05, x: 5 } : {}}
+                whileTap={isStepValid() && !isSubmitting ? { scale: 0.95 } : {}}
+                onClick={handleNext}
+                disabled={!isStepValid() || isSubmitting}
+                className={clsx(
+                  "group flex items-center space-x-3 px-10 py-4 rounded-full font-bold transition-all shadow-xl",
+                  isStepValid() && !isSubmitting
+                    ? "bg-primary text-white hover:bg-primary-hover shadow-primary/20"
+                    : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                )}
+              >
+                <span className="text-base">{currentStep === steps.length - 1 ? (isSubmitting ? "Awakening..." : "Initialize Profile") : "Next Phase"}</span>
+                {!isSubmitting && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+              </motion.button>
+            )}
           </div>
         </motion.div>
       </AnimatePresence>
