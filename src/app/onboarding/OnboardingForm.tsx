@@ -202,7 +202,7 @@ export default function OnboardingForm() {
                         <option.icon className={clsx("w-6 h-6", formData.archetype === option.id ? "text-white" : "text-primary")} />
                       </div>
                       <div>
-                        <div className="font-bold text-lg uppercase tracking-wider">{option.label}</div>
+                        <div className="font-bold text-base uppercase tracking-wider">{option.label}</div>
                         <div className={clsx("text-sm font-medium", formData.archetype === option.id ? "text-white/70" : "text-slate-500")}>
                           {option.description}
                         </div>
@@ -247,7 +247,7 @@ export default function OnboardingForm() {
                           : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
                       )}
                     >
-                      <span className="font-bold text-2xl">{option}</span>
+                      <span className="font-semibold">{option}</span>
                     </motion.button>
                   ))}
                 </motion.div>
