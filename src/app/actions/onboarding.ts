@@ -39,7 +39,10 @@ export async function completeOnboarding(data: {
 
   await supabase
     .from('user')
-    .update({
+    .upsert({
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
       archetype: data.archetype,
       stat_weights: weights,
       friction_profile: data.frictionProfile,
