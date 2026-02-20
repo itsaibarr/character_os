@@ -10,11 +10,47 @@ interface Task {
   status: "todo" | "in-progress" | "completed" | "failed";
   priority: "low" | "medium" | "high";
   difficulty: "low" | "medium" | "high";
+  str_weight?: number;
+  int_weight?: number;
+  dis_weight?: number;
+  cha_weight?: number;
+  cre_weight?: number;
+  spi_weight?: number;
 }
 
 interface TaskStackProps {
   tasks: Task[];
   onToggleStatus: (id: string) => void;
+}
+
+const STAT_LABELS: { key: keyof Task; label: string; color: string }[] = [
+  { key: "str_weight", label: "STR", color: "text-red-500" },
+  { key: "int_weight", label: "INT", color: "text-blue-500" },
+  { key: "dis_weight", label: "DIS", color: "text-amber-500" },
+  { key: "cha_weight", label: "CHA", color: "text-purple-500" },
+  { key: "cre_weight", label: "CRE", color: "text-emerald-500" },
+  { key: "spi_weight", label: "SPI", color: "text-indigo-500" },
+];
+
+function StatBadges({ task }: { task: Task }) {
+  const active = STAT_LABELS.filter(s => (task[s.key] as number ?? 0) > 0);
+  if (active.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+      {active.map(({ key, label, color }) => {
+        const weight = task[key] as number;
+        return (
+          <span key={key} className={clsx("flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider", color)}>
+            {label}
+            <span className="ml-0.5 opacity-60">
+              {"●".repeat(weight)}{"○".repeat(5 - weight)}
+            </span>
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function TaskStack({ tasks, onToggleStatus }: TaskStackProps) {
@@ -38,9 +74,9 @@ export default function TaskStack({ tasks, onToggleStatus }: TaskStackProps) {
             <button
               onClick={() => onToggleStatus(task.id)}
               className={clsx(
-                "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all",
-                task.status === "completed" 
-                  ? "bg-green-500 border-green-500" 
+                "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all shrink-0",
+                task.status === "completed"
+                  ? "bg-green-500 border-green-500"
                   : "border-slate-200 group-hover:border-slate-400"
               )}
             >
@@ -55,7 +91,7 @@ export default function TaskStack({ tasks, onToggleStatus }: TaskStackProps) {
               )}>
                 {task.content}
               </span>
-              
+
               <div className="flex items-center space-x-3 mt-1 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                 <span className={clsx(
                     "flex items-center",
@@ -67,6 +103,8 @@ export default function TaskStack({ tasks, onToggleStatus }: TaskStackProps) {
                 <span className="w-1 h-1 rounded-full bg-slate-200" />
                 <span>{task.difficulty} Effort</span>
               </div>
+
+              <StatBadges task={task} />
             </div>
 
             {/* Actions / Detail Arrow */}
