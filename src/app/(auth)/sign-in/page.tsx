@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion } from "motion/react"
+import { getOnboardingRedirect } from "@/app/actions/auth"
 
 export default function SignIn() {
     const [email, setEmail] = useState("")
@@ -18,13 +19,13 @@ export default function SignIn() {
         await authClient.signIn.email({
             email,
             password,
-            callbackURL: "/onboarding", // redirect to onboarding after sign in
         }, {
             onRequest: () => {
               setLoading(true)
             },
-            onSuccess: () => {
-              router.push("/onboarding")
+            onSuccess: async () => {
+              const destination = await getOnboardingRedirect()
+              router.push(destination)
             },
             onError: (ctx) => {
               alert(ctx.error.message)
@@ -52,7 +53,7 @@ export default function SignIn() {
                             await supabase.auth.signInWithOAuth({
                                 provider: "google",
                                 options: {
-                                    redirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+                                    redirectTo: `${window.location.origin}/auth/callback`,
                                 },
                             })
                         }}
