@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import { classifyTaskStats } from "@/lib/ai";
+import { classifyTaskStats, TaskInput, TaskAnalysis } from "@/lib/ai";
 import { getCharacterType, getCharacterStage } from "@/lib/character";
 
 async function getUser() {
@@ -32,7 +32,7 @@ export async function getUserStats() {
   const supabase = await createClient();
   const { data: userData } = await supabase
     .from('user')
-    .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp')
+    .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp, level, archetype')
     .eq('id', user.id)
     .single();
 
@@ -49,25 +49,26 @@ export async function getUserStats() {
     spirituality: spirituality_xp ?? 0,
   };
 
-  const level = Math.floor((
-    (strength_xp ?? 0) + 
-    (intellect_xp ?? 0) + 
-    (discipline_xp ?? 0) + 
-    (charisma_xp ?? 0) + 
-    (creativity_xp ?? 0) + 
-    (spirituality_xp ?? 0)
-  ) / 60) + 1;
+  const totalXP = (strength_xp ?? 0) + (intellect_xp ?? 0) + (discipline_xp ?? 0) + 
+                  (charisma_xp ?? 0) + (creativity_xp ?? 0) + (spirituality_xp ?? 0);
+  
+  const level = Math.floor(totalXP / 60) + 1;
+  const xpInCurrentLevel = totalXP % 60;
+  const xpProgress = Math.floor((xpInCurrentLevel / 60) * 100);
 
   return {
     stats,
     level,
-    xpProgress: Math.min(
-      100,
-      ((strength_xp ?? 0) % 10 + (intellect_xp ?? 0) % 10 + (discipline_xp ?? 0) % 10) * 3
-    ),
+    xpProgress,
     characterType: getCharacterType(stats, level),
     characterStage: getCharacterStage(level),
   };
+}
+
+export async function getTaskAnalysis(task: TaskInput): Promise<TaskAnalysis> {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+  return classifyTaskStats(task);
 }
 
 export async function createTask(
@@ -84,18 +85,12 @@ export async function createTask(
   const user = await getUser();
   if (!user) throw new Error("Unauthorized");
 
-  let priority: "low" | "medium" | "high" = options?.priority ?? "medium";
-  let difficulty: "low" | "medium" | "high" = options?.difficulty ?? "medium";
-
-  if (!options?.priority) {
-    if (content.toLowerCase().includes("urgent") || content.toLowerCase().includes("asap")) priority = "high";
-  }
-  if (!options?.difficulty) {
-    if (content.toLowerCase().includes("easy") || content.toLowerCase().includes("quick")) difficulty = "low";
-    if (content.toLowerCase().includes("hard") || content.toLowerCase().includes("complex")) difficulty = "high";
-  }
-
-  const weights = await classifyTaskStats(content);
+  const analysis = await classifyTaskStats({
+    content,
+    description: options?.description,
+    priority: options?.priority,
+    difficulty: options?.difficulty,
+  });
 
   const supabase = await createClient();
   const { data } = await supabase
@@ -103,19 +98,19 @@ export async function createTask(
     .insert({
       user_id: user.id,
       content,
-      priority,
-      difficulty,
+      priority: analysis.priority,
+      difficulty: analysis.difficulty,
       status: "todo",
       description: options?.description ?? null,
       due_date: options?.due_date ?? null,
       parent_task_id: options?.parent_task_id ?? null,
       xp_reward: options?.xp_reward ?? null,
-      str_weight: weights.str,
-      int_weight: weights.int,
-      dis_weight: weights.dis,
-      cha_weight: weights.cha,
-      cre_weight: weights.cre,
-      spi_weight: weights.spi,
+      str_weight: analysis.statWeights.str,
+      int_weight: analysis.statWeights.int,
+      dis_weight: analysis.statWeights.dis,
+      cha_weight: analysis.statWeights.cha,
+      cre_weight: analysis.statWeights.cre,
+      spi_weight: analysis.statWeights.spi,
     })
     .select('id')
     .single();
@@ -185,7 +180,7 @@ export async function createSubtask(parentId: string, content: string) {
   if (!parent) throw new Error("Parent task not found");
   if (parent.parent_task_id !== null) throw new Error("Cannot create subtask of a subtask");
 
-  const weights = await classifyTaskStats(content);
+  const analysis = await classifyTaskStats({ content });
 
   const { data } = await supabase
     .from('tasks')
@@ -196,12 +191,12 @@ export async function createSubtask(parentId: string, content: string) {
       difficulty: "medium",
       status: "todo",
       parent_task_id: parentId,
-      str_weight: weights.str,
-      int_weight: weights.int,
-      dis_weight: weights.dis,
-      cha_weight: weights.cha,
-      cre_weight: weights.cre,
-      spi_weight: weights.spi,
+      str_weight: analysis.statWeights.str,
+      int_weight: analysis.statWeights.int,
+      dis_weight: analysis.statWeights.dis,
+      cha_weight: analysis.statWeights.cha,
+      cre_weight: analysis.statWeights.cre,
+      spi_weight: analysis.statWeights.spi,
     })
     .select('id')
     .single();
@@ -236,65 +231,134 @@ export async function toggleTaskStatus(taskId: string) {
     .eq('id', taskId);
 
   if (newStatus === "completed") {
-    const difficultyMultiplier = task.difficulty === "high" ? 3 : task.difficulty === "medium" ? 2 : 1;
+    // 2. XP Formula
+    // difficultyMultiplier = low: 1x, medium: 1.5x, high: 2x
+    const difficultyMultiplier = task.difficulty === "high" ? 2 : task.difficulty === "medium" ? 1.5 : 1;
 
-    let gains: Record<string, number>;
+    let gains: Record<string, number> = {
+      strength_xp: 0, intellect_xp: 0, discipline_xp: 0,
+      charisma_xp: 0, creativity_xp: 0, spirituality_xp: 0,
+    };
 
     if (task.xp_reward != null) {
-      gains = {
-        strength_xp: 0, intellect_xp: 0, discipline_xp: task.xp_reward,
-        charisma_xp: 0, creativity_xp: 0, spirituality_xp: 0,
-      };
+      // Awarded XP directly if provided - distribute proportionally to weights
+      const totalWeight = (task.str_weight ?? 0) + (task.int_weight ?? 0) + (task.dis_weight ?? 0) +
+                          (task.cha_weight ?? 0) + (task.cre_weight ?? 0) + (task.spi_weight ?? 0);
+      
+      const awardedXP = task.xp_reward * difficultyMultiplier;
+
+      if (totalWeight > 0) {
+        gains.strength_xp = Math.round((task.str_weight ?? 0) / totalWeight * awardedXP);
+        gains.intellect_xp = Math.round((task.int_weight ?? 0) / totalWeight * awardedXP);
+        gains.discipline_xp = Math.round((task.dis_weight ?? 0) / totalWeight * awardedXP);
+        gains.charisma_xp = Math.round((task.cha_weight ?? 0) / totalWeight * awardedXP);
+        gains.creativity_xp = Math.round((task.cre_weight ?? 0) / totalWeight * awardedXP);
+        gains.spirituality_xp = Math.round((task.spi_weight ?? 0) / totalWeight * awardedXP);
+      } else {
+        // Default to discipline if no weights
+        gains.discipline_xp = awardedXP;
+      }
     } else {
-      gains = {
-        strength_xp:    (task.str_weight ?? 0) * difficultyMultiplier,
-        intellect_xp:   (task.int_weight ?? 0) * difficultyMultiplier,
-        discipline_xp:  (task.dis_weight ?? 0) * difficultyMultiplier,
-        charisma_xp:    (task.cha_weight ?? 0) * difficultyMultiplier,
-        creativity_xp:  (task.cre_weight ?? 0) * difficultyMultiplier,
-        spirituality_xp:(task.spi_weight ?? 0) * difficultyMultiplier,
-      };
+      // calculated from stat weights * difficulty multiplier
+      gains.strength_xp = (task.str_weight ?? 0) * difficultyMultiplier;
+      gains.intellect_xp = (task.int_weight ?? 0) * difficultyMultiplier;
+      gains.discipline_xp = (task.dis_weight ?? 0) * difficultyMultiplier;
+      gains.charisma_xp = (task.cha_weight ?? 0) * difficultyMultiplier;
+      gains.creativity_xp = (task.cre_weight ?? 0) * difficultyMultiplier;
+      gains.spirituality_xp = (task.spi_weight ?? 0) * difficultyMultiplier;
     }
 
+    // Ensure at least 1 discipline XP if all gains are 0
     if (Object.values(gains).every(v => v === 0)) {
-      gains.discipline_xp = 1;
+      gains.discipline_xp = 1 * difficultyMultiplier;
     }
 
     const { data: userData } = await supabase
       .from('user')
-      .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp')
+      .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp, level, archetype')
       .eq('id', user.id)
       .single();
 
     if (userData) {
+      const getLevel = (xp: number) => Math.floor(xp / 60) + 1;
+      
+      const oldXp = (userData.strength_xp ?? 0) + (userData.intellect_xp ?? 0) + (userData.discipline_xp ?? 0) + 
+                    (userData.charisma_xp ?? 0) + (userData.creativity_xp ?? 0) + (userData.spirituality_xp ?? 0);
+      const oldLevel = getLevel(oldXp);
+
+      const newStats = {
+        strength_xp:    (userData.strength_xp    ?? 0) + gains.strength_xp,
+        intellect_xp:   (userData.intellect_xp   ?? 0) + gains.intellect_xp,
+        discipline_xp:  (userData.discipline_xp  ?? 0) + gains.discipline_xp,
+        charisma_xp:    (userData.charisma_xp    ?? 0) + gains.charisma_xp,
+        creativity_xp:  (userData.creativity_xp  ?? 0) + gains.creativity_xp,
+        spirituality_xp:(userData.spirituality_xp ?? 0) + gains.spirituality_xp,
+      };
+
+      const newXp = newStats.strength_xp + newStats.intellect_xp + newStats.discipline_xp + 
+                    newStats.charisma_xp + newStats.creativity_xp + newStats.spirituality_xp;
+      const newLevel = getLevel(newXp);
+
+      // Check for character type change at level 5+
+      let newArchetype = userData.archetype;
+      if (newLevel >= 5) {
+        const statsObj = {
+          strength: newStats.strength_xp,
+          intellect: newStats.intellect_xp,
+          discipline: newStats.discipline_xp,
+          charisma: newStats.charisma_xp,
+          creativity: newStats.creativity_xp,
+          spirituality: newStats.spirituality_xp,
+        };
+        newArchetype = getCharacterType(statsObj, newLevel);
+      }
+
       await supabase
         .from('user')
         .update({
-          strength_xp:    (userData.strength_xp    ?? 0) + gains.strength_xp,
-          intellect_xp:   (userData.intellect_xp   ?? 0) + gains.intellect_xp,
-          discipline_xp:  (userData.discipline_xp  ?? 0) + gains.discipline_xp,
-          charisma_xp:    (userData.charisma_xp    ?? 0) + gains.charisma_xp,
-          creativity_xp:  (userData.creativity_xp  ?? 0) + gains.creativity_xp,
-          spirituality_xp:(userData.spirituality_xp ?? 0) + gains.spirituality_xp,
-          updated_at: new Date().toISOString(),
+          ...newStats,
+          level: newLevel,
+          archetype: newArchetype,
+          updatedAt: new Date().toISOString(),
         })
         .eq('id', user.id);
+
+      // Log events
+      const gainsSummary = Object.entries(gains)
+        .filter(([, v]) => v > 0)
+        .map(([k, v]) => `+${v} ${k.replace('_xp', '')}`)
+        .join(', ');
+
+      await supabase
+        .from('logs')
+        .insert({
+          user_id: user.id,
+          content: `Completed task: ${task.content} (${gainsSummary})`,
+          activity_type: "Task",
+          difficulty: task.difficulty,
+          discipline_gain: gains.discipline_xp,
+        });
+
+      if (newLevel > oldLevel) {
+        await supabase
+          .from('logs')
+          .insert({
+            user_id: user.id,
+            content: `LEVEL UP! You reached Level ${newLevel}.`,
+            activity_type: "System",
+          });
+      }
+
+      if (newArchetype !== userData.archetype) {
+        await supabase
+          .from('logs')
+          .insert({
+            user_id: user.id,
+            content: `CHARACTER EVOLUTION! You are now a ${newArchetype.toUpperCase()}.`,
+            activity_type: "System",
+          });
+      }
     }
-
-    const gainsSummary = Object.entries(gains)
-      .filter(([, v]) => v > 0)
-      .map(([k, v]) => `+${v} ${k.replace('_xp', '')}`)
-      .join(', ');
-
-    await supabase
-      .from('logs')
-      .insert({
-        user_id: user.id,
-        content: `Completed task: ${task.content} (${gainsSummary})`,
-        activity_type: "Task",
-        difficulty: task.difficulty,
-        discipline_gain: gains.discipline_xp,
-      });
   }
 
   revalidatePath("/dashboard");
