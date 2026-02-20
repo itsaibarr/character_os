@@ -8,13 +8,14 @@
   --font-sans: var(--font-sans);
 
   --color-primary: #0056d2;
+  --color-primary-dark: #0049b0;
+  --color-primary-light: #e3f2fd;
+  --color-primary-ring: rgba(0, 86, 210, 0.15);
+
   --color-secondary: #e3f2fd;
   --color-cta: #0056d2;
   --color-text: #1e293b;
 
-  --color-primary-hover: #0049b0;
-  --color-primary-light: #e3f2fd;
-  --color-primary-ring: rgba(0, 86, 210, 0.15);
   --transition-soft: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
@@ -43,35 +44,35 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Scrollbar for "Terminal" feel */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #18181b;
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: #94a3b8;
 }
 
 @layer components {
   .btn-primary {
-    @apply w-full bg-primary text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-[var(--transition-soft)] hover:bg-primary-hover active:scale-[0.98];
+    @apply w-full bg-primary text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:bg-primary-dark active:scale-[0.98];
   }
 
   .btn-secondary {
-    @apply w-full bg-white text-text border border-slate-200 font-medium py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-[var(--transition-soft)] hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98];
+    @apply w-full bg-white text-text border border-slate-200 font-medium py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98];
   }
 
   .input {
-    @apply w-full bg-white border border-slate-200 rounded-lg p-3 text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-[var(--color-primary-ring)] transition-[var(--transition-soft)];
+    @apply w-full bg-white border border-slate-200 rounded-lg p-3 text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-ring transition-all duration-200;
   }
 }
