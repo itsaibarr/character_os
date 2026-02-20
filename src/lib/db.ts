@@ -7,7 +7,10 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is not defined");
 }
 
-const client = (globalThis as any)._dbClient || postgres(process.env.DATABASE_URL, { ssl: "require" });
+const client = (globalThis as any)._dbClient || postgres(process.env.DATABASE_URL, { 
+  ssl: "require",
+  prepare: false 
+});
 
 if (process.env.NODE_ENV !== "production") {
   (globalThis as any)._dbClient = client;
