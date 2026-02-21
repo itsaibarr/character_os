@@ -43,6 +43,9 @@ export async function parseTasksFromText(
 
     return { success: true, data: tasks };
   } catch (error: unknown) {
+    if (error instanceof Error && error.message.startsWith("Rate limit exceeded")) {
+      return { success: false, error: "You've used all 20 parses for today. Try again tomorrow." };
+    }
     console.error("[parseTasksFromText] Error:", error);
     const message =
       error instanceof Error ? error.message : "Failed to parse tasks.";
