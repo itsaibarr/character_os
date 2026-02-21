@@ -279,3 +279,22 @@ CREATE TRIGGER update_characters_updated_at BEFORE UPDATE ON characters FOR EACH
 CREATE TRIGGER update_quests_updated_at BEFORE UPDATE ON quests FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 CREATE TRIGGER update_bosses_updated_at BEFORE UPDATE ON bosses FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 CREATE TRIGGER update_guilds_updated_at BEFORE UPDATE ON guilds FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+-- =========================================================================
+-- HELPER FUNCTIONS
+-- =========================================================================
+
+-- Atomically increments the completed_count for a given user+date in daily_logs.
+-- Used by toggleTaskStatus on task completion to track the consistency heatmap.
+CREATE OR REPLACE FUNCTION increment_daily_completed(p_user_id UUID, p_date DATE)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  INSERT INTO daily_logs (user_id, log_date, completed_count)
+  VALUES (p_user_id, p_date, 1)
+  ON CONFLICT (user_id, log_date)
+  DO UPDATE SET completed_count = daily_logs.completed_count + 1;
+END;
+$$;

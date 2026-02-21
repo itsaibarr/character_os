@@ -324,6 +324,23 @@ export async function toggleTaskStatus(taskId: string) {
       .neq('status', 'completed');
   }
 
+  // Restore boss HP when a task is un-completed
+  if (newStatus === "todo" && task.boss_id) {
+    const taskDamage = task.priority === 'high' ? 30 : task.priority === 'medium' ? 20 : 10;
+    const { data: bossRow } = await supabase
+      .from('bosses')
+      .select('hp_current, hp_total')
+      .eq('id', task.boss_id)
+      .maybeSingle();
+    if (bossRow) {
+      const restoredHp = Math.min(bossRow.hp_total, bossRow.hp_current + taskDamage);
+      await supabase
+        .from('bosses')
+        .update({ hp_current: restoredHp, status: 'active' })
+        .eq('id', task.boss_id);
+    }
+  }
+
   if (newStatus === "completed") {
     // 1. Fetch User Data First for Synergy and Difficulty bounds
     const { data: userData, error } = await supabase

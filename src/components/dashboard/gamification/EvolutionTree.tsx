@@ -5,15 +5,9 @@ import { memo } from "react";
 import { motion } from "motion/react";
 import { clsx } from "clsx";
 import { GitMerge } from "lucide-react";
+import type { EvolutionNode } from "@/lib/gamification/types";
 
-export interface EvolutionNode {
-  id: string;
-  name: string;
-  levelReq: number;
-  condition: string;
-  isUnlocked: boolean;
-  isActive: boolean;
-}
+export type { EvolutionNode };
 
 interface EvolutionTreeProps {
   nodes: EvolutionNode[];
