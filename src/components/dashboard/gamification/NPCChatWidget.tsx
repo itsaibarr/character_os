@@ -94,10 +94,10 @@ export default function NPCChatWidget({ npcName, moodScore, messages, onSendMess
                   
                   {/* Micro Quest Attachment styling */}
                   {msg.isQuestAssigned && (
-                    <div className="mt-1.5 border border-orange-200 bg-orange-50 p-2 rounded-sm flex items-start gap-2 max-w-[200px]">
-                      <Zap size={10} className="text-orange-500 mt-0.5 shrink-0" />
+                    <div className="mt-1.5 border border-accent/20 bg-accent-muted p-2 rounded-sm flex items-start gap-2 max-w-[200px]">
+                      <Zap size={10} className="text-accent mt-0.5 shrink-0" />
                       <div>
-                        <span className="block text-[9px] font-black uppercase text-orange-700 tracking-wider leading-tight w-full">
+                        <span className="block text-[9px] font-black uppercase text-accent tracking-wider leading-tight w-full">
                           Micro Quest Assigned
                         </span>
                       </div>

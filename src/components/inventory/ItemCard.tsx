@@ -13,7 +13,7 @@ const RARITY_STYLES: Record<ItemRarity, { border: string; bg: string; text: stri
   common:   { border: "border-l-slate-300",   bg: "bg-white",     text: "text-slate-500",   label: "Common" },
   uncommon: { border: "border-l-emerald-400", bg: "bg-white",     text: "text-emerald-600", label: "Uncommon" },
   rare:     { border: "border-l-blue-400",    bg: "bg-white",     text: "text-blue-600",    label: "Rare" },
-  mythic:   { border: "border-l-orange-500",  bg: "bg-slate-950", text: "text-orange-400",  label: "Mythic" },
+  mythic:   { border: "border-l-accent",  bg: "bg-slate-950", text: "text-accent",  label: "Mythic" },
 };
 
 const EFFECT_ICONS: Partial<Record<ItemEffectType, typeof Sparkles>> = {
@@ -91,7 +91,7 @@ export default function ItemCard({ item, onUse }: ItemCardProps) {
           className={clsx(
             "mt-auto self-start px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-sm border transition-colors",
             isMythic
-              ? "border-orange-500/40 text-orange-400 hover:bg-orange-500/10"
+              ? "border-accent/40 text-accent hover:bg-accent/10"
               : "border-border text-text hover:border-slate-400 hover:bg-slate-50"
           )}
         >

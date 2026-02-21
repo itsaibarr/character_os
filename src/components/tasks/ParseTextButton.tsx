@@ -5,7 +5,8 @@ import { Zap, ChevronDown, Loader2, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { clsx } from "clsx";
 import { toast } from "sonner";
-import { parseTasksFromText, type ExtractedTask } from "@/app/actions/nlp";
+import { parseTasksFromText } from "@/app/actions/nlp";
+import type { ExtractedTask } from "@/lib/gamification/types";
 import ParsedTaskPreview from "./ParsedTaskPreview";
 
 interface ParseTextButtonProps {
@@ -63,14 +64,14 @@ export default function ParseTextButton({ onTasksAdded }: ParseTextButtonProps) 
         className={clsx(
           "flex items-center gap-1.5 px-3 py-1.5 rounded text-[12px] font-semibold border transition-all",
           open
-            ? "bg-orange-50 border-orange-500 text-orange-600"
-            : "bg-white border-border text-muted hover:border-orange-400 hover:text-orange-500",
+            ? "bg-accent-muted border-accent text-accent"
+            : "bg-white border-border text-muted hover:border-accent hover:text-accent",
         )}
       >
         <Zap
           className={clsx(
             "w-3.5 h-3.5",
-            open ? "text-orange-500" : "text-slate-400",
+            open ? "text-accent" : "text-slate-400",
           )}
         />
         Parse Text
@@ -114,7 +115,7 @@ export default function ParseTextButton({ onTasksAdded }: ParseTextButtonProps) 
                   }}
                   placeholder={'e.g. "Tomorrow finish physics homework, buy groceries, update portfolio."'}
                   rows={4}
-                  className="w-full resize-none text-[13px] text-text placeholder:text-slate-400 border border-border rounded-sm px-3 py-2.5 focus:outline-none focus:border-orange-400 bg-slate-50 transition-colors"
+                  className="w-full resize-none text-[13px] text-text placeholder:text-slate-400 border border-border rounded-sm px-3 py-2.5 focus:outline-none focus:border-accent bg-slate-50 transition-colors"
                 />
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-[10px] text-faint">⌘↵ to parse</span>
@@ -124,7 +125,7 @@ export default function ParseTextButton({ onTasksAdded }: ParseTextButtonProps) 
                     className={clsx(
                       "flex items-center gap-1.5 px-3 py-1.5 rounded text-[12px] font-semibold transition-all",
                       text.trim() && !isParsing
-                        ? "bg-orange-500 text-white hover:bg-orange-600"
+                        ? "bg-accent text-white hover:opacity-90"
                         : "bg-slate-100 text-slate-400 cursor-not-allowed",
                     )}
                   >

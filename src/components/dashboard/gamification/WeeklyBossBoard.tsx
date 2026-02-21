@@ -31,7 +31,7 @@ export default function WeeklyBossBoard({
       <div className="w-full border border-border bg-white p-4 rounded-sm">
         <div className="flex items-start justify-between mb-3">
           <h2 className="text-[10px] font-black text-faint uppercase tracking-widest leading-none flex items-center gap-1.5">
-            <Skull size={12} className="text-orange-500" />
+            <Skull size={12} className="text-accent" />
             Weekly Boss
           </h2>
         </div>
@@ -58,7 +58,7 @@ export default function WeeklyBossBoard({
               </>
             ) : (
               <>
-                <Flame size={12} className="text-orange-500" />
+                <Flame size={12} className="text-accent" />
                 Summon Boss
               </>
             )}
@@ -79,7 +79,7 @@ export default function WeeklyBossBoard({
         <div className="flex flex-col gap-3">
           <div className="flex items-start justify-between">
             <h2 className="text-[10px] font-black text-faint uppercase tracking-widest leading-none flex items-center gap-1.5">
-              <Skull size={12} className="text-orange-500" />
+              <Skull size={12} className="text-accent" />
               Weekly Boss
             </h2>
             <div className="text-[9px] font-bold text-faint uppercase px-1.5 py-0.5 border border-border rounded-sm">
@@ -88,13 +88,13 @@ export default function WeeklyBossBoard({
           </div>
           
           <div className="border border-border bg-slate-50/30 rounded-sm p-3 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-orange-50/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-accent/5 opacity-0 group-hover:opacity-100 transition-opacity" />
             <h3 className="text-lg font-bold text-text leading-tight mb-1 relative z-10">{boss.title}</h3>
             <p className="text-[11px] text-muted mb-4 relative z-10 leading-relaxed">{boss.description}</p>
             
             <div className="mt-auto relative z-10">
                <div className="flex justify-between items-end mb-1.5">
-                  <span className="text-[10px] font-black uppercase text-orange-600 tracking-wider flex items-center gap-1">
+                  <span className="text-[10px] font-black uppercase text-accent tracking-wider flex items-center gap-1">
                     <Flame size={10} /> HP
                   </span>
                   <span className="text-xs font-bold text-text">
@@ -107,7 +107,7 @@ export default function WeeklyBossBoard({
                     initial={{ width: "100%" }}
                     animate={{ width: `${hpPercent}%` }}
                     transition={{ type: "spring", stiffness: 60, damping: 15 }}
-                    className={clsx("h-full", isDefeated ? "bg-emerald-500" : "bg-orange-500")}
+                    className={clsx("h-full", isDefeated ? "bg-emerald-500" : "bg-accent")}
                  />
                </div>
             </div>
@@ -151,7 +151,7 @@ export default function WeeklyBossBoard({
 
                 <span className={clsx(
                   "text-[10px] font-bold px-1.5 py-0.5 rounded-sm shrink-0 uppercase tracking-widest",
-                  attack.completed ? "text-emerald-600 bg-emerald-50" : "text-orange-600 bg-orange-50"
+                  attack.completed ? "text-emerald-600 bg-emerald-50" : "text-accent bg-accent-muted"
                 )}>
                   -{attack.damage} HP
                 </span>

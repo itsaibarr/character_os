@@ -66,20 +66,20 @@ export default function ActiveBuffs({ buffs }: ActiveBuffsProps) {
               className={clsx(
                 "flex items-center gap-1.5 px-2 py-1 rounded-sm border shrink-0 transition-colors",
                 isExpiring
-                  ? "border-orange-300 bg-orange-50"
+                  ? "border-accent/40 bg-accent-muted"
                   : "border-border bg-white"
               )}
             >
               <Icon
                 size={10}
                 className={clsx(
-                  isExpiring ? "text-orange-500" : "text-accent"
+                  "text-accent"
                 )}
               />
               <span
                 className={clsx(
                   "text-[10px] font-bold whitespace-nowrap",
-                  isExpiring ? "text-orange-700" : "text-text"
+                  "text-text"
                 )}
               >
                 {buff.name}
@@ -87,7 +87,7 @@ export default function ActiveBuffs({ buffs }: ActiveBuffsProps) {
               <span
                 className={clsx(
                   "text-[9px] font-bold uppercase tracking-wider whitespace-nowrap",
-                  isExpiring ? "text-orange-500" : "text-faint"
+                  isExpiring ? "text-accent" : "text-faint"
                 )}
               >
                 {timeLeft}
