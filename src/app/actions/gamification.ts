@@ -203,7 +203,7 @@ export async function generateWeeklyBoss(): Promise<ActionResponse> {
     // 1. Get up to 7 pending tasks without a boss_id
     const { data: tasks } = await supabase
       .from("tasks")
-      .select("id")
+      .select("id, priority")
       .eq("user_id", user.id)
       .eq("status", "todo")
       .is("boss_id", null)
@@ -213,19 +213,24 @@ export async function generateWeeklyBoss(): Promise<ActionResponse> {
       return { success: false, error: "Not enough pending tasks to form a boss (need at least 3)." };
     }
 
+    const computeDamage = (priority: string) =>
+      priority === "high" ? 30 : priority === "medium" ? 20 : 10;
+
+    const totalHp = tasks.reduce((sum, t) => sum + computeDamage(t.priority), 0);
+
     // 2. Spawn the Boss
     const nextSunday = new Date();
     nextSunday.setDate(nextSunday.getDate() + (7 - nextSunday.getDay())); // next Sunday
-    
+
     const { data: boss, error: bossError } = await supabase
       .from("bosses")
       .insert({
         user_id: user.id,
         title: "The Procrastination Behemoth",
-        description: "Defeat all linked tasks before Sunday night!",
-        hp_total: tasks.length,
-        hp_current: tasks.length,
-        expires_at: nextSunday.toISOString()
+        description: "A manifestation of your delayed tasks. Defeat it before Sunday.",
+        hp_total: totalHp,
+        hp_current: totalHp,
+        expires_at: nextSunday.toISOString(),
       })
       .select("id")
       .single();
