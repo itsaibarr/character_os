@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { AnimatePresence } from "motion/react";
 import TaskStack from "@/components/dashboard/TaskStack";
+import TaskDetail from "@/components/tasks/TaskDetail";
 import { getTasks, toggleTaskStatus } from "@/app/actions/tasks";
 
 interface Task {
@@ -11,6 +13,9 @@ interface Task {
   priority: "low" | "medium" | "high";
   difficulty: "low" | "medium" | "high";
   parent_task_id?: string | null;
+  due_date?: string | null;
+  description?: string | null;
+  xp_reward?: number | null;
   str_weight?: number;
   int_weight?: number;
   dis_weight?: number;
@@ -27,24 +32,27 @@ interface TaskStackWrapperProps {
 export default function TaskStackWrapper({ refreshKey, onStatusToggled }: TaskStackWrapperProps) {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  async function reloadTasks() {
+    const data = await getTasks();
+    setAllTasks(data as Task[]);
+  }
 
   useEffect(() => {
-    async function loadTasks() {
-      const data = await getTasks();
-      setAllTasks(data as Task[]);
-      setLoading(false);
-    }
-    loadTasks();
+    reloadTasks().then(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
   const handleToggleStatus = async (taskId: string) => {
     await toggleTaskStatus(taskId);
-    const data = await getTasks();
-    setAllTasks(data as Task[]);
+    await reloadTasks();
+    if (onStatusToggled) onStatusToggled();
+  };
 
-    if (onStatusToggled) {
-      onStatusToggled();
-    }
+  const handleClose = async () => {
+    setSelectedTaskId(null);
+    await reloadTasks();
   };
 
   if (loading) {
@@ -56,6 +64,30 @@ export default function TaskStackWrapper({ refreshKey, onStatusToggled }: TaskSt
   }
 
   const activeTasks = allTasks.filter(t => t.status === "todo" || t.status === "in-progress");
+  const selectedTask = selectedTaskId ? (allTasks.find(t => t.id === selectedTaskId) ?? null) : null;
+  const selectedSubtasks = selectedTaskId
+    ? allTasks.filter(t => t.parent_task_id === selectedTaskId)
+    : [];
 
-  return <TaskStack tasks={activeTasks} allTasks={allTasks} onToggleStatus={handleToggleStatus} />;
+  return (
+    <>
+      <TaskStack
+        tasks={activeTasks}
+        allTasks={allTasks}
+        onToggleStatus={handleToggleStatus}
+        onSelectTask={setSelectedTaskId}
+      />
+      <AnimatePresence>
+        {selectedTaskId && (
+          <TaskDetail
+            task={selectedTask as any}
+            subtasks={selectedSubtasks as any}
+            onClose={handleClose}
+            onDeleted={handleClose}
+            onToggleStatus={handleToggleStatus}
+          />
+        )}
+      </AnimatePresence>
+    </>
+  );
 }
