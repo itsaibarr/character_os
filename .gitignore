@@ -50,3 +50,8 @@ next-env.d.ts
 # worktrees
 .worktrees/
 *.log
+/test-results/
+/git_status.txt
+/status*.txt
+/*.patch
+/log.txt
