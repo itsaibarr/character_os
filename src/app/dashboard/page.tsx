@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getUserStats, getTasks, toggleTaskStatus } from "../actions/tasks";
+import { getUserStats } from "../actions/tasks";
 import { CharacterType, CharacterStage } from "@/lib/character";
 import StatGrid from "@/components/dashboard/StatGrid";
 import AppSidebar from "@/components/AppSidebar";
@@ -12,19 +12,6 @@ import CharacterDisplay from "@/components/dashboard/CharacterDisplay";
 import DashboardCommandWrapper from "@/components/dashboard/DashboardCommandWrapper";
 import TaskStackWrapper from "@/components/dashboard/TaskStackWrapper";
 
-interface Task {
-  id: string;
-  content: string;
-  status: "todo" | "in-progress" | "completed" | "failed";
-  priority: "low" | "medium" | "high";
-  difficulty: "low" | "medium" | "high";
-  str_weight?: number;
-  int_weight?: number;
-  dis_weight?: number;
-  cha_weight?: number;
-  cre_weight?: number;
-  spi_weight?: number;
-}
 
 interface UserStats {
   stats: {
@@ -44,7 +31,6 @@ interface UserStats {
 export default function DashboardPage() {
   const [userEmail, setUserEmail] = useState<string>("");
   const [userStats, setUserStats] = useState<UserStats | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [taskRefreshKey, setTaskRefreshKey] = useState(0);
 
@@ -67,9 +53,6 @@ export default function DashboardPage() {
       }
       setUserStats(stats);
 
-      const fetchedTasks = await getTasks();
-      setTasks(fetchedTasks as Task[]);
-      
       setLoading(false);
     }
 
@@ -81,12 +64,6 @@ export default function DashboardPage() {
     if (stats) {
       setUserStats(stats);
     }
-  };
-
-  const handleToggleTask = async (taskId: string) => {
-    await toggleTaskStatus(taskId);
-    await refreshStats();
-    setTaskRefreshKey(k => k + 1);
   };
 
   if (loading) {

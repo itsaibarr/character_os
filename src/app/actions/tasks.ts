@@ -300,14 +300,26 @@ export async function toggleTaskStatus(taskId: string) {
 
   const newStatus = task.status === "completed" ? "todo" : "completed";
 
+  const now = new Date().toISOString();
+
   await supabase
     .from('tasks')
     .update({
       status: newStatus,
-      completed_at: newStatus === "completed" ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
+      completed_at: newStatus === "completed" ? now : null,
+      updated_at: now,
     })
     .eq('id', taskId);
+
+  // Auto-complete all incomplete subtasks when a parent is completed
+  if (newStatus === "completed" && !task.parent_task_id) {
+    await supabase
+      .from('tasks')
+      .update({ status: "completed", completed_at: now, updated_at: now })
+      .eq('parent_task_id', taskId)
+      .eq('user_id', user.id)
+      .neq('status', 'completed');
+  }
 
   if (newStatus === "completed") {
     // 2. XP Formula
