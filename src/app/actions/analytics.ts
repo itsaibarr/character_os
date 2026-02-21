@@ -1,36 +1,9 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import type { ActionResponse } from "@/app/actions/gamification";
-
-export interface AttributeDrift {
-  attribute: "str" | "int" | "dis" | "cha" | "cre" | "spi";
-  direction: "rising" | "lagging";
-  deltaPct: number;
-}
-
-export interface AnalyticsInsights {
-  attributeDrift: AttributeDrift[];
-  /** Top 3 task categories by count (using difficulty as category) */
-  categoryDistribution: Array<{ category: string; pct: number }>;
-  /** 0–1 score. >0.75 = warning level (1.25x of normal load). */
-  burnoutScore: number;
-  /** e.g. 1.3 means "1.3x normal load" */
-  burnoutMultiplier: number;
-}
-
-const STAT_KEYS = ["str", "int", "dis", "cha", "cre", "spi"] as const;
-type StatKey = (typeof STAT_KEYS)[number];
-
-const STAT_LABELS: Record<StatKey, string> = {
-  str: "Strength",
-  int: "Intellect",
-  dis: "Discipline",
-  cha: "Charisma",
-  cre: "Creativity",
-  spi: "Spirituality",
-};
-export { STAT_LABELS };
+import type { ActionResponse } from "@/lib/gamification/types";
+import type { AnalyticsInsights, AttributeDrift } from "@/lib/gamification/types";
+import { STAT_KEYS, type StatKey } from "@/lib/gamification/types";
 
 /**
  * Returns analytics insights for the dashboard panel.

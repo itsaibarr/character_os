@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { ITEM_CATALOG } from "@/lib/gamification/item-catalog";
 import { activateBuff, fetchActiveBuffs, cleanExpiredBuffs } from "@/lib/gamification/buffs";
-import type { ActionResponse } from "./gamification";
+import type { ActionResponse } from "@/lib/gamification/types";
 import type { InventoryItem, ActiveBuff } from "@/lib/gamification/types";
 
 /**
