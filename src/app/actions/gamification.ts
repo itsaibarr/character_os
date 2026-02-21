@@ -7,6 +7,7 @@ import { generateDailyQuests, generateMentorDialogue } from "@/lib/ai";
 import { calculateDifficultyAdjustments } from "@/lib/gamification/math";
 
 import type { Boss, BossAttack } from "@/components/dashboard/gamification/WeeklyBossBoard";
+import type { HeatmapDataPoint } from "@/components/dashboard/gamification/AnalyticsHeatmap";
 
 // Define strict return types
 export type ActionResponse<T = unknown> = {
@@ -398,5 +399,37 @@ export async function getActiveWeeklyBoss(): Promise<{
   } catch (error) {
     console.error('[getActiveWeeklyBoss] Error:', error);
     return null;
+  }
+}
+
+/**
+ * Fetches completed task counts per day for the consistency heatmap.
+ */
+export async function getHeatmapData(days = 90): Promise<HeatmapDataPoint[]> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - (days - 1));
+    const startStr = startDate.toISOString().split('T')[0];
+
+    const { data: logs } = await supabase
+      .from('daily_logs')
+      .select('log_date, completed_count')
+      .eq('user_id', user.id)
+      .gte('log_date', startStr)
+      .order('log_date', { ascending: true });
+
+    if (!logs) return [];
+
+    return logs.map(l => ({
+      date: l.log_date,
+      count: l.completed_count,
+    }));
+  } catch (error) {
+    console.error('[getHeatmapData] Error:', error);
+    return [];
   }
 }
