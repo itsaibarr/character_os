@@ -79,16 +79,14 @@ export default function DashboardPage() {
   if (!userStats) return null;
 
   return (
-    <div className="min-h-screen bg-canvas text-text selection:bg-accent-muted pb-20">
+    <div className="min-h-screen bg-canvas text-text selection:bg-accent-muted">
       <AppSidebar userEmail={userEmail} />
 
-      {/* LootDropAlert and NPCChatWidget to be wired with real data in a future task */}
+      <main className="ml-12 px-6 py-6 h-screen overflow-hidden">
+        <div className="flex gap-6 items-start h-full">
 
-      <main className="ml-12 px-8 py-10 flex flex-col gap-10">
-        
-        {/* TOP ROW: Character + Core Tasks */}
-        <div className="flex gap-10 items-start">
-          <div className="w-[540px] shrink-0 flex flex-col gap-8">
+          {/* LEFT: Character + Command + Stats */}
+          <div className="w-[400px] shrink-0 flex flex-col gap-4 overflow-y-auto h-full pb-6">
             <CharacterDisplay
               characterType={userStats.characterType}
               characterStage={userStats.characterStage}
@@ -105,24 +103,25 @@ export default function DashboardPage() {
               level={userStats.level}
               xpProgress={userStats.xpProgress}
             />
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-3">
               <Link
                 href="/tasks"
-                className="px-4 py-2 text-sm font-medium text-accent bg-white border border-accent rounded-sm hover:bg-accent hover:text-white transition-colors"
+                className="px-3 py-1.5 text-xs font-bold text-accent bg-white border border-accent rounded-sm hover:bg-accent hover:text-white transition-colors"
               >
                 View All Tasks
               </Link>
               <Link
                 href="/radar"
-                className="px-4 py-2 text-sm font-medium text-accent bg-white border border-accent rounded-sm hover:bg-accent hover:text-white transition-colors"
+                className="px-3 py-1.5 text-xs font-bold text-accent bg-white border border-accent rounded-sm hover:bg-accent hover:text-white transition-colors"
               >
                 View Full Radar
               </Link>
             </div>
           </div>
 
-          <div className="flex-1 min-w-0 flex flex-col max-h-[600px]">
-            <h2 className="text-xs font-black text-faint uppercase tracking-widest mb-3 shrink-0">Active Commands</h2>
+          {/* CENTER: Active Tasks */}
+          <div className="flex-1 min-w-0 flex flex-col h-full pb-6">
+            <h2 className="text-[10px] font-black text-faint uppercase tracking-widest mb-3 shrink-0">Active Commands</h2>
             <div className="flex-1 overflow-y-auto">
               <TaskStackWrapper
                 refreshKey={taskRefreshKey}
@@ -130,18 +129,13 @@ export default function DashboardPage() {
               />
             </div>
           </div>
+
+          {/* RIGHT: Gamification */}
+          <div className="w-[320px] shrink-0 h-full overflow-y-auto pb-6">
+            <GamificationHub onStatChange={refreshStats} />
+          </div>
+
         </div>
-
-        <div className="w-full h-px bg-border my-2" />
-
-        {/* BOTTOM ROW: Gamification Hub */}
-        <div>
-          <h2 className="text-sm font-black text-text uppercase tracking-widest leading-none mb-6">
-            Gamification Hub
-          </h2>
-          <GamificationHub onStatChange={refreshStats} />
-        </div>
-
       </main>
     </div>
   );

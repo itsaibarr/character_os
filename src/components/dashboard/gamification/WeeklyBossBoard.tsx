@@ -28,17 +28,17 @@ export default function WeeklyBossBoard({
   // Empty state — no active boss
   if (!boss) {
     return (
-      <div className="w-full border border-border bg-slate-50/50 p-4 rounded-sm">
-        <div className="flex items-start justify-between mb-4">
-          <h2 className="text-sm font-black text-text uppercase tracking-widest leading-none flex items-center gap-2">
-            <Skull size={14} className="text-orange-500" />
+      <div className="w-full border border-border bg-white p-4 rounded-sm">
+        <div className="flex items-start justify-between mb-3">
+          <h2 className="text-[10px] font-black text-faint uppercase tracking-widest leading-none flex items-center gap-1.5">
+            <Skull size={12} className="text-orange-500" />
             Weekly Boss
           </h2>
         </div>
 
-        <div className="flex flex-col items-center justify-center py-8 gap-4">
-          <div className="w-10 h-10 rounded-full bg-slate-100 border border-border flex items-center justify-center">
-            <Skull size={18} className="text-slate-300" />
+        <div className="flex flex-col items-center justify-center py-4 gap-3">
+          <div className="w-8 h-8 rounded-full bg-slate-100 border border-border flex items-center justify-center">
+            <Skull size={14} className="text-slate-300" />
           </div>
           <div className="text-center">
             <p className="text-sm font-bold text-text mb-1">No Active Boss</p>
@@ -72,22 +72,22 @@ export default function WeeklyBossBoard({
   }
 
   return (
-    <div className="w-full border border-border bg-slate-50/50 p-4 rounded-sm">
-      <div className="flex flex-col md:flex-row gap-6">
+    <div className="w-full border border-border bg-white p-4 rounded-sm">
+      <div className="flex flex-col gap-4">
         
-        {/* Extreme Asymmetry: Boss Avatar and Stats take up ~30% width */}
-        <div className="md:w-1/3 flex flex-col gap-4">
+        {/* Boss Info */}
+        <div className="flex flex-col gap-3">
           <div className="flex items-start justify-between">
-            <h2 className="text-sm font-black text-text uppercase tracking-widest leading-none flex items-center gap-2">
-              <Skull size={14} className="text-orange-500" />
+            <h2 className="text-[10px] font-black text-faint uppercase tracking-widest leading-none flex items-center gap-1.5">
+              <Skull size={12} className="text-orange-500" />
               Weekly Boss
             </h2>
-            <div className="text-[10px] font-bold text-faint uppercase px-1.5 py-0.5 border border-border rounded-sm">
+            <div className="text-[9px] font-bold text-faint uppercase px-1.5 py-0.5 border border-border rounded-sm">
               Ends {new Date(boss.expiresAt).toLocaleDateString(undefined, { weekday: 'short' })}
             </div>
           </div>
           
-          <div className="flex-1 border border-border bg-white rounded-sm p-3 relative overflow-hidden group">
+          <div className="border border-border bg-slate-50/30 rounded-sm p-3 relative overflow-hidden group">
             <div className="absolute inset-0 bg-orange-50/30 opacity-0 group-hover:opacity-100 transition-opacity" />
             <h3 className="text-lg font-bold text-text leading-tight mb-1 relative z-10">{boss.title}</h3>
             <p className="text-[11px] text-muted mb-4 relative z-10 leading-relaxed">{boss.description}</p>
@@ -114,10 +114,10 @@ export default function WeeklyBossBoard({
           </div>
         </div>
 
-        {/* Vertical Stack: Task Attacks */}
-        <div className="md:w-2/3 flex flex-col">
-          <h3 className="text-[10px] font-black text-faint uppercase tracking-widest mb-3 flex items-center gap-1.5">
-            <Target size={12} />
+        {/* Task Attacks */}
+        <div className="flex flex-col">
+          <h3 className="text-[10px] font-black text-faint uppercase tracking-widest mb-2 flex items-center gap-1.5">
+            <Target size={10} />
             Linked Attacks ({attacks.filter(a => a.completed).length}/{attacks.length})
           </h3>
 
