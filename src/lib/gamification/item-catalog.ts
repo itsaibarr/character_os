@@ -203,6 +203,9 @@ export const ITEM_CATALOG: CatalogItem[] = [
   {
     id: 'unbreakable-vow',
     name: 'Unbreakable Vow',
+    // TODO: The days:7 effect is not yet consumed by the shield activation logic.
+    // checkAndUpdateStreak treats all shields as single-use. Future: implement
+    // multi-day shield windows by tracking shield_expires_at in user_streaks.
     description: 'A mythic pact. Shields your streak from any missed days for 7 days.',
     rarity: 'mythic',
     effectType: 'streak_shield',
