@@ -8,6 +8,8 @@ import { calculateDifficultyAdjustments } from "@/lib/gamification/math";
 
 import type { Boss, BossAttack } from "@/components/dashboard/gamification/WeeklyBossBoard";
 import type { HeatmapDataPoint } from "@/components/dashboard/gamification/AnalyticsHeatmap";
+import type { EvolutionNode } from "@/components/dashboard/gamification/EvolutionTree";
+import { determineEvolutionBranch, type EvolutionBranch } from "@/lib/gamification/progression";
 
 // Define strict return types
 export type ActionResponse<T = unknown> = {
@@ -431,5 +433,96 @@ export async function getHeatmapData(days = 90): Promise<HeatmapDataPoint[]> {
   } catch (error) {
     console.error('[getHeatmapData] Error:', error);
     return [];
+  }
+}
+
+type BranchMeta = { name: string; levelReq: number; condition: string };
+
+const BRANCH_META: Record<EvolutionBranch, BranchMeta> = {
+  novice:   { name: 'Novice',   levelReq: 1,  condition: 'Begin your journey' },
+  beast:    { name: 'Beast',    levelReq: 5,  condition: 'STR Dominant (>40%)' },
+  mystic:   { name: 'Mystic',   levelReq: 5,  condition: 'CRE + CHA Dominant (>50%)' },
+  techno:   { name: 'Techno',   levelReq: 5,  condition: 'INT + DIS Dominant (>50%)' },
+  diplomat: { name: 'Diplomat', levelReq: 10, condition: 'CHA + DIS Dominant (>50%)' },
+  monk:     { name: 'Monk',     levelReq: 10, condition: 'SPI + DIS Dominant (>50%)' },
+  polymath: { name: 'Polymath', levelReq: 20, condition: 'Balanced across all stats' },
+};
+
+// What the user could evolve into next, based on current branch
+const NEXT_BRANCH: Partial<Record<EvolutionBranch, EvolutionBranch>> = {
+  novice:   'techno',
+  beast:    'polymath',
+  mystic:   'polymath',
+  techno:   'polymath',
+  diplomat: 'polymath',
+  monk:     'polymath',
+};
+
+/**
+ * Returns ordered evolution nodes for display in the EvolutionTree component.
+ */
+export async function getEvolutionStatus(): Promise<{ nodes: EvolutionNode[] }> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { nodes: [] };
+
+    const { data: userData } = await supabase
+      .from('user')
+      .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp')
+      .eq('id', user.id)
+      .single();
+
+    if (!userData) return { nodes: [] };
+
+    const stats = {
+      strength_xp:     userData.strength_xp     ?? 0,
+      intellect_xp:    userData.intellect_xp     ?? 0,
+      discipline_xp:   userData.discipline_xp    ?? 0,
+      charisma_xp:     userData.charisma_xp      ?? 0,
+      creativity_xp:   userData.creativity_xp    ?? 0,
+      spirituality_xp: userData.spirituality_xp  ?? 0,
+    };
+
+    const totalXp = Object.values(stats).reduce((s, v) => s + v, 0);
+    const level = Math.floor(totalXp / 60) + 1;
+
+    const currentBranch: EvolutionBranch = totalXp === 0 ? 'novice' : determineEvolutionBranch(stats);
+
+    const nodes: EvolutionNode[] = [];
+
+    // Node 1: always Novice as origin
+    nodes.push({
+      id: 'novice',
+      ...BRANCH_META.novice,
+      isUnlocked: true,
+      isActive: currentBranch === 'novice',
+    });
+
+    // Node 2: current active branch (if not novice)
+    if (currentBranch !== 'novice') {
+      const meta = BRANCH_META[currentBranch];
+      nodes.push({
+        id: currentBranch,
+        ...meta,
+        isUnlocked: true,
+        isActive: true,
+      });
+    }
+
+    // Node 3: next possible evolution
+    const nextBranchKey = NEXT_BRANCH[currentBranch] ?? 'polymath';
+    const nextMeta = BRANCH_META[nextBranchKey];
+    nodes.push({
+      id: nextBranchKey,
+      ...nextMeta,
+      isUnlocked: level >= nextMeta.levelReq,
+      isActive: false,
+    });
+
+    return { nodes };
+  } catch (error) {
+    console.error('[getEvolutionStatus] Error:', error);
+    return { nodes: [] };
   }
 }
