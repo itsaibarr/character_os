@@ -22,7 +22,8 @@ import { toggleTaskStatus } from "@/app/actions/tasks";
 async function getActiveWeeklyBoss(): Promise<{ boss: Boss; attacks: BossAttack[] } | null> {
   return null;
 }
-async function getHeatmapData(_days?: number): Promise<HeatmapDataPoint[]> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function getHeatmapData(days?: number): Promise<HeatmapDataPoint[]> {
   return [];
 }
 async function getEvolutionStatus(): Promise<{ nodes: EvolutionNode[] }> {
@@ -54,6 +55,7 @@ export default function GamificationHub({ onStatChange }: GamificationHubProps) 
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAll()
       .catch(err => console.error('[GamificationHub] load error:', err))
       .finally(() => setLoading(false));
