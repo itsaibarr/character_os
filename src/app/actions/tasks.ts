@@ -454,7 +454,7 @@ export async function toggleTaskStatus(taskId: string) {
           creativity_xp: newStats.creativity_xp,
           spirituality_xp: newStats.spirituality_xp,
         };
-        const branch = determineEvolutionBranch(statsObj);
+        const branch = determineEvolutionBranch(statsObj, newLevel);
         // Only evolve if the branch logic returns a distinct class, or just assign it
         // We fallback to standard getCharacterType if it's 'polymath' or 'novice' to keep existing logic
         if (branch !== 'polymath' && branch !== 'novice') {

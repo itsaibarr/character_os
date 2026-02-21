@@ -485,7 +485,7 @@ export async function getEvolutionStatus(): Promise<{ nodes: EvolutionNode[] }> 
     const totalXp = Object.values(stats).reduce((s, v) => s + v, 0);
     const level = Math.floor(totalXp / 60) + 1;
 
-    const currentBranch: EvolutionBranch = totalXp === 0 ? 'novice' : determineEvolutionBranch(stats);
+    const currentBranch: EvolutionBranch = totalXp === 0 ? 'novice' : determineEvolutionBranch(stats, level);
 
     const nodes: EvolutionNode[] = [];
 
