@@ -10,6 +10,7 @@ interface Task {
   status: "todo" | "in-progress" | "completed" | "failed";
   priority: "low" | "medium" | "high";
   difficulty: "low" | "medium" | "high";
+  parent_task_id?: string | null;
   str_weight?: number;
   int_weight?: number;
   dis_weight?: number;
@@ -24,15 +25,13 @@ interface TaskStackWrapperProps {
 }
 
 export default function TaskStackWrapper({ refreshKey, onStatusToggled }: TaskStackWrapperProps) {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadTasks() {
       const data = await getTasks();
-      // Filter to only show todo and in-progress tasks
-      const filtered = data.filter((t: Task) => t.status === "todo" || t.status === "in-progress");
-      setTasks(filtered as Task[]);
+      setAllTasks(data as Task[]);
       setLoading(false);
     }
     loadTasks();
@@ -40,12 +39,9 @@ export default function TaskStackWrapper({ refreshKey, onStatusToggled }: TaskSt
 
   const handleToggleStatus = async (taskId: string) => {
     await toggleTaskStatus(taskId);
-    // Reload tasks after toggling
     const data = await getTasks();
-    const filtered = data.filter((t: Task) => t.status === "todo" || t.status === "in-progress");
-    setTasks(filtered as Task[]);
-    
-    // Notify parent to refresh stats
+    setAllTasks(data as Task[]);
+
     if (onStatusToggled) {
       onStatusToggled();
     }
@@ -59,5 +55,7 @@ export default function TaskStackWrapper({ refreshKey, onStatusToggled }: TaskSt
     );
   }
 
-  return <TaskStack tasks={tasks} onToggleStatus={handleToggleStatus} />;
+  const activeTasks = allTasks.filter(t => t.status === "todo" || t.status === "in-progress");
+
+  return <TaskStack tasks={activeTasks} allTasks={allTasks} onToggleStatus={handleToggleStatus} />;
 }
