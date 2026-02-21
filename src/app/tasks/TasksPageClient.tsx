@@ -12,6 +12,7 @@ import LevelUpModal, { LevelUpData } from "@/components/dashboard/LevelUpModal";
 import LootDropAlert, { type LootItem } from "@/components/dashboard/gamification/LootDropAlert";
 import { getUserStats } from "@/app/actions/tasks";
 import type { UserStats } from "@/lib/gamification/synergy";
+import ParseTextButton from "@/components/tasks/ParseTextButton";
 
 interface Task {
   id: string;
@@ -259,10 +260,11 @@ export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksP
             className="flex-1 flex flex-col min-h-0"
           >
             <div className="flex-1 overflow-y-auto px-10 py-10">
-              <header className="mb-10">
+              <header className="mb-10 flex items-center justify-between">
                 <h1 className="text-2xl font-black tracking-tight text-text capitalize">
                   {filter}
                 </h1>
+                <ParseTextButton onTasksAdded={() => router.refresh()} />
               </header>
 
               <TaskList 
