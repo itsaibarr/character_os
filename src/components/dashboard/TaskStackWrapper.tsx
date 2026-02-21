@@ -5,6 +5,7 @@ import { AnimatePresence } from "motion/react";
 import TaskStack from "@/components/dashboard/TaskStack";
 import TaskDetail from "@/components/tasks/TaskDetail";
 import LevelUpModal, { LevelUpData } from "@/components/dashboard/LevelUpModal";
+import LootDropAlert, { type LootItem } from "@/components/dashboard/gamification/LootDropAlert";
 import { getTasks, toggleTaskStatus } from "@/app/actions/tasks";
 import { toast } from "sonner";
 
@@ -31,11 +32,36 @@ interface TaskStackWrapperProps {
   onStatusToggled?: () => void | Promise<void>;
 }
 
+function formatXpToast(
+  gains: Record<string, number>,
+  synergyMultiplier?: number,
+  buffMultiplier?: number,
+): { title: string; description: string } {
+  const parts = Object.entries(gains)
+    .filter(([, v]) => v > 0)
+    .map(([key, value]) => `+${value} ${key.replace('_xp', '').toUpperCase()}`);
+
+  const modifiers: string[] = [];
+  if (synergyMultiplier && synergyMultiplier > 1) {
+    modifiers.push(`⚡${synergyMultiplier}x synergy`);
+  }
+  if (buffMultiplier && buffMultiplier > 1) {
+    modifiers.push(`🧪${buffMultiplier}x buff`);
+  }
+
+  const description = modifiers.length > 0
+    ? `Task completed · ${modifiers.join(' · ')}`
+    : "Task completed";
+
+  return { title: parts.join(', '), description };
+}
+
 export default function TaskStackWrapper({ refreshKey, onStatusToggled }: TaskStackWrapperProps) {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [levelUpData, setLevelUpData] = useState<LevelUpData | null>(null);
+  const [lootDrop, setLootDrop] = useState<LootItem | null>(null);
 
   async function reloadTasks() {
     const data = await getTasks();
@@ -52,21 +78,31 @@ export default function TaskStackWrapper({ refreshKey, onStatusToggled }: TaskSt
     await reloadTasks();
     
     if (result && result.gains) {
-      // filter out stats with 0 gain and format them
       const gainedStats = Object.entries(result.gains)
-        .filter(([, value]) => value > 0)
-        .map(([key, value]) => `+${value} ${key.replace('_xp', '').toUpperCase()}`)
-        .join(', ');
+        .filter(([, value]) => value > 0);
 
-      if (gainedStats) {
-        toast.success(gainedStats, {
-          description: "Task completed",
-          icon: "✨",
-        });
+      if (gainedStats.length > 0) {
+        const { title, description } = formatXpToast(
+          result.gains,
+          result.synergyMultiplier,
+          result.buffMultiplier,
+        );
+        toast.success(title, { description, icon: "✨" });
       }
       
       if (result.levelUp) {
         setLevelUpData(result.levelUp);
+      }
+
+      // Show loot drop alert
+      const drop = result.lootDrop ?? result.bossReward?.lootDrop;
+      if (drop) {
+        setLootDrop({
+          id: drop.itemId,
+          name: drop.itemName,
+          rarity: drop.rarity as LootItem["rarity"],
+          effectType: "xp_boost", // simplified — LootDropAlert only uses this for icon
+        });
       }
     }
     
@@ -116,6 +152,11 @@ export default function TaskStackWrapper({ refreshKey, onStatusToggled }: TaskSt
       <LevelUpModal 
         data={levelUpData} 
         onClose={() => setLevelUpData(null)} 
+      />
+
+      <LootDropAlert
+        item={lootDrop}
+        onDismiss={() => setLootDrop(null)}
       />
     </>
   );

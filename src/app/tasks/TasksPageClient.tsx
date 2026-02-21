@@ -9,6 +9,9 @@ import { clsx } from "clsx";
 import TaskList from "@/components/tasks/TaskList";
 import TaskDetail from "@/components/tasks/TaskDetail";
 import LevelUpModal, { LevelUpData } from "@/components/dashboard/LevelUpModal";
+import LootDropAlert, { type LootItem } from "@/components/dashboard/gamification/LootDropAlert";
+import { getUserStats } from "@/app/actions/tasks";
+import type { UserStats } from "@/lib/gamification/synergy";
 
 interface Task {
   id: string;
@@ -28,12 +31,45 @@ interface Task {
   spi_weight?: number | null;
 }
 
+interface ToggleResult {
+  gains: Record<string, number> | null;
+  levelUp: LevelUpData | null;
+  lootDrop?: { itemId: string; itemName: string; rarity: string; description: string } | null;
+  bossReward?: { bonusXp: number; lootDrop: { itemId: string; itemName: string; rarity: string; description: string } | null } | null;
+  synergyMultiplier?: number;
+  buffMultiplier?: number;
+}
+
 interface TasksPageClientProps {
   initialTasks: Task[];
-  onToggleStatus: (taskId: string) => Promise<{ gains: Record<string, number> | null; levelUp: LevelUpData | null } | void>;
+  onToggleStatus: (taskId: string) => Promise<ToggleResult | void>;
 }
 
 type FilterMode = "inbox" | "today" | "completed";
+
+function formatXpToast(
+  gains: Record<string, number>,
+  synergyMultiplier?: number,
+  buffMultiplier?: number,
+): { title: string; description: string } {
+  const parts = Object.entries(gains)
+    .filter(([, v]) => v > 0)
+    .map(([key, value]) => `+${value} ${key.replace('_xp', '').toUpperCase()}`);
+
+  const modifiers: string[] = [];
+  if (synergyMultiplier && synergyMultiplier > 1) {
+    modifiers.push(`⚡${synergyMultiplier}x synergy`);
+  }
+  if (buffMultiplier && buffMultiplier > 1) {
+    modifiers.push(`🧪${buffMultiplier}x buff`);
+  }
+
+  const description = modifiers.length > 0
+    ? `Task completed · ${modifiers.join(' · ')}`
+    : "Task completed";
+
+  return { title: parts.join(', '), description };
+}
 
 export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksPageClientProps) {
   const router = useRouter();
@@ -45,6 +81,24 @@ export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksP
 
   const [filter, setFilter] = useState<FilterMode>(urlFilter);
   const [levelUpData, setLevelUpData] = useState<LevelUpData | null>(null);
+  const [lootDrop, setLootDrop] = useState<LootItem | null>(null);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+
+  // Fetch user stats for synergy badge calculation
+  useEffect(() => {
+    getUserStats().then((data) => {
+      if (data) {
+        setUserStats({
+          strength_xp: data.stats.strength,
+          intellect_xp: data.stats.intellect,
+          discipline_xp: data.stats.discipline,
+          charisma_xp: data.stats.charisma,
+          creativity_xp: data.stats.creativity,
+          spirituality_xp: data.stats.spirituality,
+        });
+      }
+    });
+  }, []);
 
   // Sync state to URL without navigation jumps
   useEffect(() => {
@@ -77,16 +131,25 @@ export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksP
       const result = await onToggleStatus(taskId);
       
       if (result && result.gains) {
-        // filter out stats with 0 gain and format them
-        const gainedStats = Object.entries(result.gains)
-          .filter(([, value]) => value > 0)
-          .map(([key, value]) => `+${value} ${key.replace('_xp', '').toUpperCase()}`)
-          .join(', ');
+        const gainedStats = Object.entries(result.gains).filter(([, v]) => v > 0);
 
-        if (gainedStats) {
-          toast.success(gainedStats, {
-            description: "Task completed",
-            icon: "✨",
+        if (gainedStats.length > 0) {
+          const { title, description } = formatXpToast(
+            result.gains,
+            result.synergyMultiplier,
+            result.buffMultiplier,
+          );
+          toast.success(title, { description, icon: "✨" });
+        }
+
+        // Show loot drop alert
+        const drop = result.lootDrop ?? result.bossReward?.lootDrop;
+        if (drop) {
+          setLootDrop({
+            id: drop.itemId,
+            name: drop.itemName,
+            rarity: drop.rarity as LootItem["rarity"],
+            effectType: "xp_boost",
           });
         }
       }
@@ -94,6 +157,20 @@ export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksP
       if (result && result.levelUp) {
         setLevelUpData(result.levelUp);
       }
+
+      // Refresh user stats after XP change for synergy recalculation
+      getUserStats().then((data) => {
+        if (data) {
+          setUserStats({
+            strength_xp: data.stats.strength,
+            intellect_xp: data.stats.intellect,
+            discipline_xp: data.stats.discipline,
+            charisma_xp: data.stats.charisma,
+            creativity_xp: data.stats.creativity,
+            spirituality_xp: data.stats.spirituality,
+          });
+        }
+      });
     });
   };
 
@@ -194,6 +271,7 @@ export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksP
                 selectedTaskId={selectedTaskId}
                 onSelectTask={setSelectedTaskId}
                 onToggleStatus={handleToggle}
+                userStats={userStats}
               />
             </div>
           </motion.div>
@@ -215,6 +293,11 @@ export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksP
       <LevelUpModal 
         data={levelUpData} 
         onClose={() => setLevelUpData(null)} 
+      />
+
+      <LootDropAlert
+        item={lootDrop}
+        onDismiss={() => setLootDrop(null)}
       />
     </div>
   );

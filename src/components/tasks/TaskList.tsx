@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { Check, Plus, Clock, AlertCircle, ChevronRight, Loader2 } from "lucide-react";
 import { clsx } from "clsx";
 import { createTask } from "@/app/actions/tasks";
+import SynergyBadge from "@/components/tasks/SynergyBadge";
+import { calculateSynergyMultiplier, type UserStats, type TaskWeights } from "@/lib/gamification/synergy";
 
 interface Task {
   id: string;
@@ -28,6 +30,7 @@ interface TaskListProps {
   selectedTaskId: string | null;
   onSelectTask: (id: string | null) => void;
   onToggleStatus: (id: string) => void;
+  userStats?: UserStats | null;
 }
 
 const STAT_LABELS: { key: keyof Task; label: string; color: string }[] = [
@@ -39,9 +42,25 @@ const STAT_LABELS: { key: keyof Task; label: string; color: string }[] = [
   { key: "spi_weight", label: "SPI", color: "text-indigo-500" },
 ];
 
-function StatBadges({ task }: { task: Task }) {
+function getTaskWeights(task: Task): TaskWeights {
+  return {
+    str_weight: task.str_weight ?? 0,
+    int_weight: task.int_weight ?? 0,
+    dis_weight: task.dis_weight ?? 0,
+    cha_weight: task.cha_weight ?? 0,
+    cre_weight: task.cre_weight ?? 0,
+    spi_weight: task.spi_weight ?? 0,
+  };
+}
+
+function StatBadges({ task, userStats }: { task: Task; userStats?: UserStats | null }) {
   const active = STAT_LABELS.filter(s => ((task[s.key] as number) ?? 0) > 0);
   if (active.length === 0) return null;
+
+  const synergyMultiplier = userStats
+    ? calculateSynergyMultiplier(getTaskWeights(task), userStats)
+    : 1.0;
+
   return (
     <div className="flex items-center gap-1.5 mt-1 flex-wrap">
       {active.map(({ key, label, color }) => {
@@ -52,6 +71,7 @@ function StatBadges({ task }: { task: Task }) {
           </span>
         );
       })}
+      <SynergyBadge multiplier={synergyMultiplier} />
     </div>
   );
 }
@@ -68,7 +88,7 @@ function formatDueDate(dateStr: string | null): string | null {
   return `Due ${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 }
 
-export default function TaskList({ tasks, selectedTaskId, onSelectTask, onToggleStatus }: TaskListProps) {
+export default function TaskList({ tasks, selectedTaskId, onSelectTask, onToggleStatus, userStats }: TaskListProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [newContent, setNewContent] = useState("");
   const [isPending, setIsPending] = useState(false);
@@ -143,7 +163,7 @@ export default function TaskList({ tasks, selectedTaskId, onSelectTask, onToggle
                         </span>
                       )}
                     </div>
-                    <StatBadges task={task} />
+                    <StatBadges task={task} userStats={userStats} />
                   </div>
                   <ChevronRight className={clsx(
                     "w-4 h-4 shrink-0 transition-colors",
