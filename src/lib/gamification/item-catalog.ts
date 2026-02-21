@@ -20,6 +20,7 @@ export interface ItemEffect {
   multiplier?: number;
   durationHours?: number;
   amount?: number;
+  days?: number; // Used by streak shields with multi-day protection windows
 }
 
 export interface CatalogItem {
@@ -180,6 +181,15 @@ export const ITEM_CATALOG: CatalogItem[] = [
     consumable: true,
   },
   {
+    id: 'iron-resolve',
+    name: 'Iron Resolve',
+    description: 'Your will is iron. Prevents streak loss for 2 consecutive missed days.',
+    rarity: 'rare',
+    effectType: 'streak_shield',
+    effectValue: { amount: 2 },
+    consumable: true,
+  },
+  {
     id: 'mentor-scroll',
     name: 'Mentor Scroll',
     description: '+50% XP for your two weakest stats for 4 hours.',
@@ -189,7 +199,16 @@ export const ITEM_CATALOG: CatalogItem[] = [
     consumable: true,
   },
 
-  // ── Mythic (2 items) ──────────────────────────────────────────────
+  // ── Mythic (3 items) ──────────────────────────────────────────────
+  {
+    id: 'unbreakable-vow',
+    name: 'Unbreakable Vow',
+    description: 'A mythic pact. Shields your streak from any missed days for 7 days.',
+    rarity: 'mythic',
+    effectType: 'streak_shield',
+    effectValue: { days: 7 },
+    consumable: true,
+  },
   {
     id: 'polymath-tome',
     name: 'Polymath Tome',
