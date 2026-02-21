@@ -17,7 +17,7 @@ export default async function OnboardingPage() {
   if (dbUser?.onboarding_completed) redirect("/dashboard");
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center py-12">
+    <div className="min-h-screen bg-canvas text-text flex items-center justify-center py-12">
       <OnboardingForm />
     </div>
   );
