@@ -334,11 +334,11 @@ export async function toggleTaskStatus(taskId: string) {
         
     const { data: diffData } = await supabase
       .from('difficulty_adjustments')
-      .select('multiplier')
+      .select('base_multiplier')
       .eq('user_id', user.id)
       .single();
 
-    const userMultiplierBounds = diffData?.multiplier || 1.0;
+    const userMultiplierBounds = diffData?.base_multiplier || 1.0;
 
     const statsObj = {
       strength_xp: userData?.strength_xp ?? 0,
@@ -526,15 +526,27 @@ export async function toggleTaskStatus(taskId: string) {
 
       // 4. Boss Logic (Optional Phase 2)
       if (isBossTask) {
-         const { data: boss } = await supabase.from('bosses').select('hp_current, hp_max').eq('id', task.boss_id).single();
-         if (boss && boss.hp_current > 0) {
-             const newHp = Math.max(0, boss.hp_current - 1);
-             await supabase.from('bosses').update({ hp_current: newHp }).eq('id', task.boss_id);
-             
-             if (newHp === 0) {
-                 await supabase.from('logs').insert({ user_id: user.id, content: `Defeated Boss!`, activity_type: "System" });
-             }
-         }
+        const taskDamage = task.priority === 'high' ? 30 : task.priority === 'medium' ? 20 : 10;
+        const { data: bossRow } = await supabase
+          .from('bosses')
+          .select('hp_current, hp_total, status')
+          .eq('id', task.boss_id)
+          .single();
+        if (bossRow && bossRow.hp_current > 0) {
+          const newHp = Math.max(0, bossRow.hp_current - taskDamage);
+          const newStatus = newHp === 0 ? 'defeated' : bossRow.status;
+          await supabase
+            .from('bosses')
+            .update({ hp_current: newHp, status: newStatus })
+            .eq('id', task.boss_id);
+          if (newHp === 0) {
+            await supabase.from('logs').insert({
+              user_id: user.id,
+              content: `Boss Defeated! All linked tasks complete.`,
+              activity_type: 'System',
+            });
+          }
+        }
       }
 
       if (newArchetype !== userData.archetype) {
