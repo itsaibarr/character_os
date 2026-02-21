@@ -9,6 +9,8 @@ import EvolutionTree from "@/components/dashboard/gamification/EvolutionTree";
 import AnalyticsHeatmap from "@/components/dashboard/gamification/AnalyticsHeatmap";
 import ActiveBuffs from "@/components/dashboard/ActiveBuffs";
 import BossHistory from "@/components/dashboard/gamification/BossHistory";
+import StreakWidget from "@/components/dashboard/StreakWidget";
+import InsightsPanel from "@/components/dashboard/InsightsPanel";
 
 import {
   getActiveWeeklyBoss,
@@ -19,6 +21,10 @@ import {
 } from "@/app/actions/gamification";
 import { getActiveBuffs } from "@/app/actions/inventory";
 import { toggleTaskStatus } from "@/app/actions/tasks";
+import { getStreakStatus } from "@/app/actions/streak";
+import { getAnalyticsInsights } from "@/app/actions/analytics";
+import type { StreakStatus } from "@/app/actions/streak";
+import type { AnalyticsInsights } from "@/app/actions/analytics";
 
 interface GamificationHubProps {
   /** Called after any action that changes the user's XP/stats,
@@ -34,14 +40,18 @@ export default function GamificationHub({ onStatChange }: GamificationHubProps) 
   const [bossHistory, setBossHistory] = useState<BossHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingBoss, setGeneratingBoss] = useState(false);
+  const [streakStatus, setStreakStatus] = useState<StreakStatus | null>(null);
+  const [analyticsInsights, setAnalyticsInsights] = useState<AnalyticsInsights | null>(null);
 
   const loadAll = useCallback(async () => {
-    const [bossResult, heatmapResult, evolutionResult, buffsResult, historyResult] = await Promise.all([
+    const [bossResult, heatmapResult, evolutionResult, buffsResult, historyResult, streakResult, insightsResult] = await Promise.all([
       getActiveWeeklyBoss(),
       getHeatmapData(90),
       getEvolutionStatus(),
       getActiveBuffs(),
       getBossHistory(),
+      getStreakStatus(),
+      getAnalyticsInsights(),
     ]);
     setBoss(bossResult);
     setHeatmapData(heatmapResult);
@@ -50,6 +60,12 @@ export default function GamificationHub({ onStatChange }: GamificationHubProps) 
       setActiveBuffs(buffsResult.data);
     }
     setBossHistory(historyResult);
+    if (streakResult.success && streakResult.data) {
+      setStreakStatus(streakResult.data);
+    }
+    if (insightsResult.success && insightsResult.data) {
+      setAnalyticsInsights(insightsResult.data);
+    }
   }, []);
 
   useEffect(() => {
@@ -91,8 +107,10 @@ export default function GamificationHub({ onStatChange }: GamificationHubProps) 
 
   return (
     <div className="flex flex-col gap-4">
+      <StreakWidget status={streakStatus} />
+
       {activeBuffs.length > 0 && <ActiveBuffs buffs={activeBuffs} />}
-      
+
       <WeeklyBossBoard
         boss={boss?.boss}
         attacks={boss?.attacks ?? []}
@@ -100,11 +118,13 @@ export default function GamificationHub({ onStatChange }: GamificationHubProps) 
         onGenerateBoss={handleGenerateBoss}
         generatingBoss={generatingBoss}
       />
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <AnalyticsHeatmap data={heatmapData} days={90} />
         <EvolutionTree nodes={evolutionNodes} />
       </div>
+
+      <InsightsPanel insights={analyticsInsights} streakStatus={streakStatus} />
 
       {bossHistory.length > 0 && (
         <div className="mt-2">
