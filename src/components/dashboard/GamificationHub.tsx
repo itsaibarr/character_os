@@ -78,21 +78,16 @@ export default function GamificationHub({ onStatChange }: GamificationHubProps) 
   }
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-      <div className="flex flex-col gap-8">
-        <WeeklyBossBoard
-          boss={boss?.boss}
-          attacks={boss?.attacks ?? []}
-          onAttackToggle={handleAttackToggle}
-          onGenerateBoss={handleGenerateBoss}
-          generatingBoss={generatingBoss}
-        />
-        <EvolutionTree nodes={evolutionNodes} />
-      </div>
-
-      <div className="flex flex-col gap-8">
-        <AnalyticsHeatmap data={heatmapData} days={90} />
-      </div>
+    <div className="flex flex-col gap-4">
+      <WeeklyBossBoard
+        boss={boss?.boss}
+        attacks={boss?.attacks ?? []}
+        onAttackToggle={handleAttackToggle}
+        onGenerateBoss={handleGenerateBoss}
+        generatingBoss={generatingBoss}
+      />
+      <AnalyticsHeatmap data={heatmapData} days={90} />
+      <EvolutionTree nodes={evolutionNodes} />
     </div>
   );
 }

@@ -19,36 +19,36 @@ function EvolutionTree({ nodes }: EvolutionTreeProps) {
 
   return (
     <div className="w-full border border-border bg-white p-4 rounded-sm overflow-x-auto">
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-3">
         <GitMerge size={14} className="text-slate-400" />
         <h3 className="text-[10px] font-black text-faint uppercase tracking-widest">
           Evolution Pathways
         </h3>
       </div>
 
-      <div className="flex flex-col gap-6 ml-2 border-l-2 border-slate-100 pl-6 relative">
+      <div className="flex flex-col gap-3 ml-2 border-l-2 border-slate-100 pl-4 relative">
         {nodes.map((node) => (
           <div key={node.id} className="relative group">
             {/* Connector Line */}
-            <div className="absolute w-6 h-[2px] bg-slate-100 -left-6 top-4" />
+            <div className="absolute w-4 h-[2px] bg-slate-100 -left-4 top-4" />
             
             {/* Active Node Indicator Ring */}
             {node.isActive && (
               <motion.div 
                 layoutId="activeEvolution"
-                className="absolute w-2.5 h-2.5 rounded-full border-2 border-slate-900 bg-white -left-[29px] top-[11px] z-10"
+                className="absolute w-2.5 h-2.5 rounded-full border-2 border-slate-900 bg-white -left-[21px] top-[11px] z-10"
               />
             )}
             
             {!node.isActive && (
               <div className={clsx(
-                "absolute w-1.5 h-1.5 rounded-full -left-[27px] top-[13px] z-10",
+                "absolute w-1.5 h-1.5 rounded-full -left-[19px] top-[13px] z-10",
                 node.isUnlocked ? "bg-slate-400" : "bg-slate-200"
               )} />
             )}
 
             <div className={clsx(
-              "p-3 border rounded-sm w-[240px] transition-all",
+              "p-2.5 border rounded-sm w-full transition-all",
               node.isActive 
                 ? "border-slate-900 bg-slate-50" 
                 : node.isUnlocked 
