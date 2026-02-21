@@ -72,7 +72,7 @@ export default function SignIn() {
               <label className="text-sm font-medium text-slate-700">Email</label>
               <input
                 type="email"
-                className="input w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 focus:outline-none focus:border-primary transition-colors"
+                className="input w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 focus:outline-none focus:border-accent transition-colors"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -81,7 +81,7 @@ export default function SignIn() {
               <label className="text-sm font-medium text-slate-700">Password</label>
               <input
                 type="password"
-                className="input w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 focus:outline-none focus:border-primary transition-colors"
+                className="input w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 focus:outline-none focus:border-accent transition-colors"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -97,7 +97,7 @@ export default function SignIn() {
           </button>
 
           <p className="text-center text-sm text-slate-500">
-            <Link href="/sign-up" className="text-primary hover:underline font-medium">Sign Up</Link>
+            <Link href="/sign-up" className="text-accent hover:underline font-medium">Sign Up</Link>
           </p>
         </div>
       </motion.div>
