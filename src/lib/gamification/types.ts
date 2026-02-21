@@ -86,3 +86,9 @@ export interface BossHistoryEntry {
   outcome: "defeated" | "escaped";
   completedAt: string;
 }
+
+// ─── Phase 3 type re-exports ──────────────────────────────────────────────────
+// Re-exported here so consumers can import Phase 3 types from one central place.
+export type { ExtractedTask } from "@/app/actions/nlp";
+export type { StreakStatus } from "@/app/actions/streak";
+export type { AnalyticsInsights, AttributeDrift } from "@/app/actions/analytics";
