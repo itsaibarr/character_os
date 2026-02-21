@@ -35,20 +35,20 @@ function AnalyticsHeatmap({ data, days = 90 }: AnalyticsHeatmapProps) {
   // Find max for scaling, default to at least 5 for division
   const maxCount = useMemo(() => Math.max(5, ...data.map(d => d.count)), [data]);
 
-  // Notion/GitHub monochrome scale approach
+  // Accent-tinted scale (derived from --color-accent: #0056D2)
   const getColorLevel = (count: number) => {
-    if (count === 0) return "bg-slate-100 border-transparent";
+    if (count === 0) return "bg-blue-50 border-transparent";
     
     const ratio = count / maxCount;
-    if (ratio > 0.8) return "bg-slate-800 border-slate-900";
-    if (ratio > 0.5) return "bg-slate-600 border-slate-700";
-    if (ratio > 0.2) return "bg-slate-400 border-slate-500";
-    return "bg-slate-300 border-slate-400";
+    if (ratio > 0.8) return "bg-blue-800 border-blue-900";
+    if (ratio > 0.5) return "bg-blue-600 border-blue-700";
+    if (ratio > 0.2) return "bg-blue-400 border-blue-500";
+    return "bg-blue-200 border-blue-300";
   };
 
   return (
     <div className="w-full border border-border bg-white p-4 rounded-sm">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <h3 className="text-[10px] font-black text-faint uppercase tracking-widest flex items-center gap-1.5">
           <Activity size={12} />
           Consistency Heatmap
@@ -75,11 +75,11 @@ function AnalyticsHeatmap({ data, days = 90 }: AnalyticsHeatmapProps) {
       <div className="flex items-center gap-2 mt-4 text-[9px] font-bold text-faint uppercase tracking-wider">
         <span>Less</span>
         <div className="flex gap-[3px]">
-          <div className="w-2.5 h-2.5 rounded-[1px] bg-slate-100" />
-          <div className="w-2.5 h-2.5 rounded-[1px] bg-slate-300" />
-          <div className="w-2.5 h-2.5 rounded-[1px] bg-slate-400" />
-          <div className="w-2.5 h-2.5 rounded-[1px] bg-slate-600" />
-          <div className="w-2.5 h-2.5 rounded-[1px] bg-slate-800" />
+          <div className="w-2.5 h-2.5 rounded-[1px] bg-blue-50" />
+          <div className="w-2.5 h-2.5 rounded-[1px] bg-blue-200" />
+          <div className="w-2.5 h-2.5 rounded-[1px] bg-blue-400" />
+          <div className="w-2.5 h-2.5 rounded-[1px] bg-blue-600" />
+          <div className="w-2.5 h-2.5 rounded-[1px] bg-blue-800" />
         </div>
         <span>More</span>
       </div>
