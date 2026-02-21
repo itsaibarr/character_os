@@ -287,3 +287,117 @@ IMPORTANT: Return ONLY valid JSON matching the schema.`;
     }];
   }
 }
+
+/**
+ * AI-Generated Dynamic Quests (Phase 1 Gamification)
+ */
+const questAnalysisSchema = z.object({
+  quests: z.array(z.object({
+    title: z.string().describe("Quest title, e.g. 'Defeat the Procrastination Beast'"),
+    description: z.string().describe("Why this quest was chosen based on the user's current situation"),
+    quest_type: z.enum(["urgent", "strength", "momentum", "boss_prep"]),
+    reward_multiplier: z.number().describe("1.0 to 1.5, based on how hard the AI thinks the quest is")
+  }))
+});
+
+export type GeneratedQuest = {
+  title: string;
+  description: string;
+  quest_type: "urgent" | "strength" | "momentum" | "boss_prep";
+  reward_multiplier: number;
+};
+
+export async function generateDailyQuests(
+  weakestStat: string,
+  yesterdayFails: number,
+  yesterdayCompletes: number,
+  backlogCount: number
+): Promise<GeneratedQuest[]> {
+  const systemPrompt = `You are a Gamemaster AI for an RPG productivity app.
+  Generate custom quests for the player today.
+  
+  Player Context:
+  - Weakest Stat: ${weakestStat.toUpperCase()} (Needs development)
+  - Yesterday's Performance: ${yesterdayCompletes} completed, ${yesterdayFails} failed
+  - Current Backlog Size: ${backlogCount} tasks
+  
+  Quest Types:
+  - "urgent": If backlog is high or fails were high, generate a quest to clear 1-3 backlog items.
+  - "strength": Generate a quest specifically requiring them to train their weakest stat (${weakestStat}).
+  - "momentum": If fails were high, generate an easy "complete 2 small tasks" momentum builder.
+  - "boss_prep": A narrative quest to prepare for the end-of-week review.
+  
+  Strict Constraints:
+  1. Do NOT overwhelm the player. If backlogCount > 10 or yesterdayFails > yesterdayCompletes, ONLY generate 1-2 easy "momentum" or "urgent" quests.
+  2. Otherwise, generate 2-4 balanced quests.
+  
+  IMPORTANT: Return ONLY valid JSON matching the schema.`;
+
+  try {
+    const { object } = await withTimeout(
+      generateObject({
+        model: aiModel,
+        schema: questAnalysisSchema,
+        prompt: systemPrompt,
+        maxRetries: 0,
+      }),
+      TIMEOUT_MS
+    );
+    
+    return object.quests;
+  } catch (error) {
+    console.error("[generateDailyQuests] AI extraction failed:", error);
+    // Fallback quest
+    return [{
+      title: `Train ${weakestStat.toUpperCase()}`,
+      description: "Fallback system quest to train your weakest attribute.",
+      quest_type: "strength",
+      reward_multiplier: 1.2
+    }];
+  }
+}
+
+/**
+ * AI Companion/NPC Mentor Dialogue (Phase 4 Gamification)
+ */
+const mentorDialogueSchema = z.object({
+  dialogue: z.string().describe("1-2 sentences of dialogue exactly as the NPC would speak it.")
+});
+
+export async function generateMentorDialogue(
+  evolutionPath: string,
+  burnoutRisk: number,
+  currentStreak: number
+): Promise<string> {
+  const systemPrompt = `You are an RPG NPC Companion acting as the player's mentor.
+  
+  Player Context:
+  - Evolution Path / Archetype: ${evolutionPath}
+  - Burnout Risk Score: ${burnoutRisk} (0 is perfectly rested, 1.0 is extremely burned out)
+  - Current Daily Streak: ${currentStreak} days
+  
+  Instructions:
+  - Keep it extremely brief (1-2 sentences maximum).
+  - Adopt a tone that matches their archetype: 'beast' is aggressive and primal, 'mystic' speaks cryptically, 'techno' is cold and analytical, 'diplomat' is persuasive and charming, 'monk' is calm and centered, 'polymath' is curious and academic, 'novice' is encouraging.
+  - If burnout is > 0.7, firmly advise them to rest and do a Spirituality/recovery task.
+  - If streak > 7, praise their consistency.
+  - Do not use hashtags or markdown formatting. Speak exactly what the NPC says.`;
+
+  try {
+    const { object } = await withTimeout(
+      generateObject({
+        model: aiModel,
+        schema: mentorDialogueSchema,
+        prompt: systemPrompt,
+        maxRetries: 0,
+      }),
+      TIMEOUT_MS
+    );
+    
+    return object.dialogue;
+  } catch (error) {
+    console.error("[generateMentorDialogue] AI failed:", error);
+    return "Remember, even heroes need to rest sometimes. Stay vigilant.";
+  }
+}
+
