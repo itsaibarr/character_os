@@ -11,6 +11,9 @@ interface Task {
   priority: "low" | "medium" | "high";
   difficulty: "low" | "medium" | "high";
   parent_task_id?: string | null;
+  due_date?: string | null;
+  description?: string | null;
+  xp_reward?: number | null;
   str_weight?: number;
   int_weight?: number;
   dis_weight?: number;
@@ -23,6 +26,7 @@ interface TaskStackProps {
   tasks: Task[];
   allTasks: Task[];
   onToggleStatus: (id: string) => void;
+  onSelectTask?: (id: string) => void;
 }
 
 const STAT_LABELS: { key: keyof Task; color: string }[] = [
@@ -33,6 +37,38 @@ const STAT_LABELS: { key: keyof Task; color: string }[] = [
   { key: "cre_weight", color: "bg-emerald-400" },
   { key: "spi_weight", color: "bg-indigo-400"  },
 ];
+
+const STAT_KEYS: (keyof Task)[] = [
+  "str_weight", "int_weight", "dis_weight",
+  "cha_weight", "cre_weight", "spi_weight",
+];
+
+function computeXp(task: Task): number {
+  if (task.xp_reward != null) return task.xp_reward;
+  const mult = task.difficulty === "high" ? 3 : task.difficulty === "medium" ? 2 : 1;
+  return STAT_KEYS.reduce((sum, key) => sum + (((task[key] as number) ?? 0) * mult), 0);
+}
+
+function formatDueDate(dateStr: string): { label: string; className: string } {
+  const due = new Date(dateStr);
+  const dueMidnight = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+  const now = new Date();
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diff = Math.round((dueMidnight.getTime() - todayMidnight.getTime()) / 86_400_000);
+  if (diff < 0) return { label: "Overdue", className: "text-red-500" };
+  if (diff === 0) return { label: "Today", className: "text-amber-500" };
+  if (diff === 1) return { label: "Tomorrow", className: "text-text/60" };
+  return {
+    label: due.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    className: "text-text/60",
+  };
+}
+
+const DIFFICULTY_LABEL: Record<string, string> = {
+  low: "Simple",
+  medium: "Moderate",
+  high: "Advanced",
+};
 
 function ActiveStatDots({ task }: { task: Task }) {
   const dots = STAT_LABELS.filter(s => (task[s.key] as number ?? 0) > 0);
