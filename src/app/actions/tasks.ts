@@ -7,6 +7,9 @@ import { getCharacterType, getCharacterStage } from "@/lib/character";
 import { calculateSynergyMultiplier } from "@/lib/gamification/synergy";
 import { rollForLootRarity } from "@/lib/gamification/rng";
 import { isMilestoneLevel, determineEvolutionBranch } from "@/lib/gamification/progression";
+import { getRandomItemByRarity } from "@/lib/gamification/item-catalog";
+import { getActiveBuffMultiplier } from "@/lib/gamification/buffs";
+import { awardBossDefeatRewards } from "./gamification";
 
 async function getUser() {
   const supabase = await createClient();
@@ -375,10 +378,11 @@ export async function toggleTaskStatus(taskId: string) {
       spi_weight: task.spi_weight ?? 0,
     };
 
-    // 2. XP Formula
+    // 2. XP Formula (base × adaptive difficulty × synergy × active buffs)
     const baseDifficultyMult = task.difficulty === "high" ? 2 : task.difficulty === "medium" ? 1.5 : 1;
     const synergyMult = calculateSynergyMultiplier(weightsObj, statsObj);
-    const difficultyMultiplier = baseDifficultyMult * userMultiplierBounds * synergyMult;
+    const buffMultiplier = await getActiveBuffMultiplier(supabase, user.id);
+    const difficultyMultiplier = baseDifficultyMult * userMultiplierBounds * synergyMult * buffMultiplier;
 
     const gains: Record<string, number> = {
       strength_xp: 0, intellect_xp: 0, discipline_xp: 0,
@@ -527,28 +531,56 @@ export async function toggleTaskStatus(taskId: string) {
         p_date: today,
       });
 
-      // 3. RNG Loot Roll
-      let lootMessage = "";
+      // 3. RNG Loot Roll — persist to inventory
+      let lootDrop: { itemId: string; itemName: string; rarity: string; description: string } | null = null;
       const isBossTask = task.boss_id !== null && task.boss_id !== undefined;
       const lootRoll = rollForLootRarity(isBossTask ? 2.0 : 1.0);
       
       if (lootRoll !== 'none') {
-          lootMessage = ` Found Loot: ${lootRoll.toUpperCase()} drop!`;
-          // Future phase: insert physical item row to `inventory`
-          // e.g. await supabase.from('inventory').insert({...});
+          const droppedItem = getRandomItemByRarity(lootRoll);
+          if (droppedItem) {
+            // Upsert: increment quantity if already owned
+            const { data: existing } = await supabase
+              .from('inventory')
+              .select('id, quantity')
+              .eq('user_id', user.id)
+              .eq('item_id', droppedItem.id)
+              .maybeSingle();
+
+            if (existing) {
+              await supabase
+                .from('inventory')
+                .update({ quantity: existing.quantity + 1 })
+                .eq('id', existing.id);
+            } else {
+              await supabase
+                .from('inventory')
+                .insert({
+                  user_id: user.id,
+                  item_id: droppedItem.id,
+                  quantity: 1,
+                });
+            }
+
+            lootDrop = {
+              itemId: droppedItem.id,
+              itemName: droppedItem.name,
+              rarity: droppedItem.rarity,
+              description: droppedItem.description,
+            };
+
+            await supabase
+              .from('logs')
+              .insert({
+                user_id: user.id,
+                content: `Found Loot: ${droppedItem.name} (${lootRoll.toUpperCase()})`,
+                activity_type: "System",
+              });
+          }
       }
 
-      if (lootMessage !== "") {
-          await supabase
-            .from('logs')
-            .insert({
-              user_id: user.id,
-              content: lootMessage.trim(),
-              activity_type: "System",
-            });
-      }
-
-      // 4. Boss Logic (Optional Phase 2)
+      // 4. Boss Damage + Defeat Rewards
+      let bossReward = null;
       if (isBossTask) {
         const taskDamage = task.priority === 'high' ? 30 : task.priority === 'medium' ? 20 : 10;
         const { data: bossRow } = await supabase
@@ -569,6 +601,8 @@ export async function toggleTaskStatus(taskId: string) {
               content: `Boss Defeated! All linked tasks complete.`,
               activity_type: 'System',
             });
+            // Award boss defeat rewards: bonus XP + guaranteed rare+ loot
+            bossReward = await awardBossDefeatRewards(user.id, task.boss_id);
           }
         }
       }
@@ -597,16 +631,16 @@ export async function toggleTaskStatus(taskId: string) {
       revalidatePath("/dashboard");
       revalidatePath("/tasks");
       
-      return { gains, levelUp };
+      return { gains, levelUp, lootDrop, bossReward, synergyMultiplier: synergyMult, buffMultiplier };
     }
     
     revalidatePath("/dashboard");
     revalidatePath("/tasks");
     
-    return { gains, levelUp: null };
+    return { gains, levelUp: null, lootDrop: null, bossReward: null };
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/tasks");
-  return { gains: null, levelUp: null };
+  return { gains: null, levelUp: null, lootDrop: null, bossReward: null };
 }
