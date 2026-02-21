@@ -14,21 +14,12 @@ import AnalyticsHeatmap, {
 } from "@/components/dashboard/gamification/AnalyticsHeatmap";
 
 import {
+  getActiveWeeklyBoss,
+  getHeatmapData,
+  getEvolutionStatus,
   generateWeeklyBoss,
 } from "@/app/actions/gamification";
 import { toggleTaskStatus } from "@/app/actions/tasks";
-
-// TODO: Remove stubs once Agent 1 merges (adds these to src/app/actions/gamification.ts)
-async function getActiveWeeklyBoss(): Promise<{ boss: Boss; attacks: BossAttack[] } | null> {
-  return null;
-}
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function getHeatmapData(days?: number): Promise<HeatmapDataPoint[]> {
-  return [];
-}
-async function getEvolutionStatus(): Promise<{ nodes: EvolutionNode[] }> {
-  return { nodes: [] };
-}
 
 interface GamificationHubProps {
   /** Called after any action that changes the user's XP/stats,
