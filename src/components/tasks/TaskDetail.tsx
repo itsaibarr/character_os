@@ -125,7 +125,7 @@ export default function TaskDetail({ task, subtasks, onClose, onDeleted, onToggl
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="absolute right-0 top-0 h-full w-[420px] bg-canvas border-l border-border shadow-xl flex flex-col overflow-hidden"
+        className="absolute right-0 top-0 h-full w-[560px] max-w-full bg-canvas border-l border-border shadow-xl flex flex-col overflow-hidden"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">

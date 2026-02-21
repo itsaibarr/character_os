@@ -26,7 +26,7 @@ interface Task {
 
 interface TaskStackWrapperProps {
   refreshKey?: number;
-  onStatusToggled?: () => void;
+  onStatusToggled?: () => void | Promise<void>;
 }
 
 export default function TaskStackWrapper({ refreshKey, onStatusToggled }: TaskStackWrapperProps) {
@@ -47,12 +47,13 @@ export default function TaskStackWrapper({ refreshKey, onStatusToggled }: TaskSt
   const handleToggleStatus = async (taskId: string) => {
     await toggleTaskStatus(taskId);
     await reloadTasks();
-    if (onStatusToggled) onStatusToggled();
+    if (onStatusToggled) await onStatusToggled();
   };
 
   const handleClose = async () => {
     setSelectedTaskId(null);
     await reloadTasks();
+    if (onStatusToggled) await onStatusToggled();
   };
 
   if (loading) {
