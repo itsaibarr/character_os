@@ -32,3 +32,57 @@ export interface EvolutionNode {
   isUnlocked: boolean;
   isActive: boolean;
 }
+
+export type ItemRarity = "common" | "uncommon" | "rare" | "mythic";
+
+export type ItemEffectType =
+  | "xp_boost"
+  | "xp_boost_all"
+  | "xp_boost_stat"
+  | "streak_shield"
+  | "evolution_catalyst"
+  | "stat_reset"
+  | "temp_buff"
+  | "permanent_stat"
+  | "cosmetic"
+  | "title"
+  | "permanent_boost";
+
+export interface InventoryItem {
+  id: string;
+  itemId: string;
+  name: string;
+  description: string;
+  rarity: ItemRarity;
+  effectType: ItemEffectType;
+  quantity: number;
+  consumable: boolean;
+}
+
+export interface ActiveBuff {
+  id: string;
+  name: string;
+  effectType: string;
+  effectValue: number;
+  expiresAt: string;
+  remainingMinutes: number;
+}
+
+export interface LootDrop {
+  itemId: string;
+  itemName: string;
+  rarity: string;
+  description: string;
+}
+
+export interface BossDefeatReward {
+  bonusXp: number;
+  lootDrop: LootDrop | null;
+}
+
+export interface BossHistoryEntry {
+  id: string;
+  title: string;
+  outcome: "defeated" | "escaped";
+  completedAt: string;
+}
