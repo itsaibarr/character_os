@@ -131,7 +131,7 @@ export default function DashboardPage() {
           </div>
 
           {/* RIGHT: Gamification */}
-          <div className="w-[320px] shrink-0 h-full overflow-y-auto pb-6">
+          <div className="w-[380px] shrink-0 h-full overflow-y-auto pb-6">
             <GamificationHub onStatChange={refreshStats} />
           </div>
 
