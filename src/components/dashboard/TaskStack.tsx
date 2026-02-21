@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Check } from "lucide-react";
 import { clsx } from "clsx";
@@ -82,7 +83,7 @@ function ActiveStatDots({ task }: { task: Task }) {
   );
 }
 
-export default function TaskStack({ tasks, allTasks, onToggleStatus, onSelectTask }: TaskStackProps) {
+function TaskStack({ tasks, allTasks, onToggleStatus, onSelectTask }: TaskStackProps) {
   if (tasks.length === 0) {
     return (
       <p className="text-sm text-faint py-4">No active commands.</p>
@@ -90,31 +91,39 @@ export default function TaskStack({ tasks, allTasks, onToggleStatus, onSelectTas
   }
 
   // Build lookup of all subtasks by parent (from allTasks for accurate counts)
-  const allSubtasksByParent = new Map<string, Task[]>();
-  for (const t of allTasks) {
-    if (t.parent_task_id) {
-      const arr = allSubtasksByParent.get(t.parent_task_id) ?? [];
-      arr.push(t);
-      allSubtasksByParent.set(t.parent_task_id, arr);
+  const allSubtasksByParent = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const t of allTasks) {
+      if (t.parent_task_id) {
+        const arr = map.get(t.parent_task_id) ?? [];
+        arr.push(t);
+        map.set(t.parent_task_id, arr);
+      }
     }
-  }
+    return map;
+  }, [allTasks]);
 
   // Active subtasks by parent (only tasks currently displayed)
-  const activeSubtasksByParent = new Map<string, Task[]>();
-  for (const t of tasks) {
-    if (t.parent_task_id) {
-      const arr = activeSubtasksByParent.get(t.parent_task_id) ?? [];
-      arr.push(t);
-      activeSubtasksByParent.set(t.parent_task_id, arr);
+  const activeSubtasksByParent = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const t of tasks) {
+      if (t.parent_task_id) {
+        const arr = map.get(t.parent_task_id) ?? [];
+        arr.push(t);
+        map.set(t.parent_task_id, arr);
+      }
     }
-  }
+    return map;
+  }, [tasks]);
 
   // Top-level active tasks (no parent)
-  const activeParents = tasks.filter(t => !t.parent_task_id);
+  const activeParents = useMemo(() => tasks.filter(t => !t.parent_task_id), [tasks]);
 
   // Orphan subtasks whose parent is not in active tasks (parent completed/missing)
-  const activeParentIds = new Set(activeParents.map(t => t.id));
-  const orphans = tasks.filter(t => t.parent_task_id && !activeParentIds.has(t.parent_task_id));
+  const orphans = useMemo(() => {
+    const activeParentIds = new Set(activeParents.map(t => t.id));
+    return tasks.filter(t => t.parent_task_id && !activeParentIds.has(t.parent_task_id));
+  }, [tasks, activeParents]);
 
   // Render items: parents with their subtasks, then orphans
   const items: React.ReactNode[] = [];
@@ -326,3 +335,5 @@ export default function TaskStack({ tasks, allTasks, onToggleStatus, onSelectTas
     </div>
   );
 }
+
+export default memo(TaskStack);

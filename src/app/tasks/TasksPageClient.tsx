@@ -4,9 +4,11 @@ import { useState, useOptimistic, useTransition, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Inbox, Calendar, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 import { clsx } from "clsx";
 import TaskList from "@/components/tasks/TaskList";
 import TaskDetail from "@/components/tasks/TaskDetail";
+import LevelUpModal, { LevelUpData } from "@/components/dashboard/LevelUpModal";
 
 interface Task {
   id: string;
@@ -28,7 +30,7 @@ interface Task {
 
 interface TasksPageClientProps {
   initialTasks: Task[];
-  onToggleStatus: (taskId: string) => Promise<void>;
+  onToggleStatus: (taskId: string) => Promise<{ gains: Record<string, number> | null; levelUp: LevelUpData | null } | void>;
 }
 
 type FilterMode = "inbox" | "today" | "completed";
@@ -42,6 +44,7 @@ export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksP
   const urlFilter = (searchParams.get("filter") as FilterMode) || "inbox";
 
   const [filter, setFilter] = useState<FilterMode>(urlFilter);
+  const [levelUpData, setLevelUpData] = useState<LevelUpData | null>(null);
 
   // Sync state to URL without navigation jumps
   useEffect(() => {
@@ -71,7 +74,26 @@ export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksP
   const handleToggle = (taskId: string) => {
     startTransition(async () => {
       addOptimistic(taskId);
-      await onToggleStatus(taskId);
+      const result = await onToggleStatus(taskId);
+      
+      if (result && result.gains) {
+        // filter out stats with 0 gain and format them
+        const gainedStats = Object.entries(result.gains)
+          .filter(([, value]) => value > 0)
+          .map(([key, value]) => `+${value} ${key.replace('_xp', '').toUpperCase()}`)
+          .join(', ');
+
+        if (gainedStats) {
+          toast.success(gainedStats, {
+            description: "Task completed",
+            icon: "✨",
+          });
+        }
+      }
+      
+      if (result && result.levelUp) {
+        setLevelUpData(result.levelUp);
+      }
     });
   };
 
@@ -189,6 +211,11 @@ export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksP
           />
         )}
       </AnimatePresence>
+
+      <LevelUpModal 
+        data={levelUpData} 
+        onClose={() => setLevelUpData(null)} 
+      />
     </div>
   );
 }

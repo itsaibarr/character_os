@@ -9,11 +9,11 @@ export default async function TasksPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const allTasks = await getTasks() as any[];
+  const allTasks = await getTasks();
 
   const handleToggleTask = async (taskId: string) => {
     "use server";
-    await toggleTaskStatus(taskId);
+    return await toggleTaskStatus(taskId);
   };
 
   return (

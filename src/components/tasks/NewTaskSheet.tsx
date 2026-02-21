@@ -92,8 +92,8 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
       });
       onCreated?.(newId ?? "");
       onClose();
-    } catch (err: any) {
-      setError(err?.message ?? "Failed to create task");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create task");
     } finally {
       setIsSubmitting(false);
     }
@@ -158,7 +158,7 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Priority</label>
-                  <select value={priority} onChange={e => setPriority(e.target.value as any)} className={SELECT_BASE}>
+                  <select value={priority} onChange={e => setPriority(e.target.value as "low"|"medium"|"high")} className={SELECT_BASE}>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
@@ -166,7 +166,7 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Difficulty</label>
-                  <select value={difficulty} onChange={e => setDifficulty(e.target.value as any)} className={SELECT_BASE}>
+                  <select value={difficulty} onChange={e => setDifficulty(e.target.value as "low"|"medium"|"high")} className={SELECT_BASE}>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
@@ -239,7 +239,7 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
                       
                       {analysis.insights.length > 0 && (
                         <div className="text-[10px] text-slate-400 italic text-right max-w-[150px]">
-                          "{analysis.insights[0]}"
+                          &quot;{analysis.insights[0]}&quot;
                         </div>
                       )}
                     </div>
