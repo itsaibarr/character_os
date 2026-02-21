@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { ActionResponse } from "@/app/actions/gamification";
+import { ITEM_CATALOG } from "@/lib/gamification/item-catalog";
 import {
   isStreakBroken,
   hasCompletedToday,
@@ -110,7 +111,8 @@ export async function checkAndUpdateStreak(): Promise<
     const broken = isStreakBroken(lastDate);
 
     if (broken && shieldShouldActivate(shieldsAvailable, broken)) {
-      // Auto-consume one shield — streak continues
+      // TODO: Multi-day shields (Iron Resolve, Unbreakable Vow) are currently
+      // treated as single-day consumables. See item-catalog.ts for effectValue.days semantics.
       shieldsAvailable -= 1;
       currentStreak += 1;
     } else if (broken) {
@@ -126,29 +128,39 @@ export async function checkAndUpdateStreak(): Promise<
 
     // Award milestone item if applicable
     if (milestone) {
-      const { data: itemRow } = await supabase
-        .from("items")
-        .select("id")
-        .eq("name", _itemNameFromSlug(milestone.itemId))
-        .maybeSingle();
-
-      if (itemRow) {
-        const { data: existing } = await supabase
-          .from("inventory")
-          .select("id, quantity")
-          .eq("user_id", user.id)
-          .eq("item_id", itemRow.id)
+      const catalogEntry = ITEM_CATALOG.find(i => i.id === milestone.itemId);
+      if (!catalogEntry) {
+        console.warn(`[checkAndUpdateStreak] Unknown milestone itemId: ${milestone.itemId}`);
+      } else {
+        const { data: itemRow } = await supabase
+          .from("items")
+          .select("id")
+          .eq("name", catalogEntry.name)
           .maybeSingle();
 
-        if (existing) {
-          await supabase
+        if (itemRow) {
+          // NOTE: This read-then-write has a theoretical race condition under
+          // concurrent calls. The inventory table has UNIQUE(user_id, item_id),
+          // but a true atomic increment requires a DB-level function. In practice,
+          // checkAndUpdateStreak is idempotent (returns early if already updated
+          // today), so concurrent execution for the same user is extremely unlikely.
+          const { data: existing } = await supabase
             .from("inventory")
-            .update({ quantity: existing.quantity + 1 })
-            .eq("id", existing.id);
-        } else {
-          await supabase
-            .from("inventory")
-            .insert({ user_id: user.id, item_id: itemRow.id, quantity: 1 });
+            .select("id, quantity")
+            .eq("user_id", user.id)
+            .eq("item_id", itemRow.id)
+            .maybeSingle();
+
+          if (existing) {
+            await supabase
+              .from("inventory")
+              .update({ quantity: existing.quantity + 1 })
+              .eq("id", existing.id);
+          } else {
+            await supabase
+              .from("inventory")
+              .insert({ user_id: user.id, item_id: itemRow.id, quantity: 1 });
+          }
         }
       }
 
@@ -217,14 +229,3 @@ export async function checkAndUpdateStreak(): Promise<
   }
 }
 
-/**
- * Maps catalog item slugs to their display names in the DB items table.
- */
-function _itemNameFromSlug(slug: string): string {
-  const map: Record<string, string> = {
-    'streak-shield':   'Streak Shield',
-    'iron-resolve':    'Iron Resolve',
-    'unbreakable-vow': 'Unbreakable Vow',
-  };
-  return map[slug] ?? slug;
-}
