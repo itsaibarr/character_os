@@ -211,8 +211,10 @@ function InsightRow({
 }) {
   return (
     <div className="flex items-center gap-2.5 px-4 py-2">
-      {icon && (
+      {icon ? (
         <span className={clsx("shrink-0", color)}>{icon}</span>
+      ) : (
+        <span className="w-3.5 shrink-0" />
       )}
       <span className={clsx("text-[12px] font-medium", color)}>{label}</span>
     </div>
