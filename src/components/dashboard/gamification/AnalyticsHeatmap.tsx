@@ -15,7 +15,9 @@ interface AnalyticsHeatmapProps {
   days?: number;
 }
 
-// Generates an array of dates ending on today
+// Note: dates are generated in UTC. For users in negative UTC offsets,
+// today's local date may differ from the UTC date after midnight UTC.
+// This is an acceptable edge case for the current phase.
 function generateDateRange(days: number) {
   const dates = [];
   const today = new Date();
