@@ -23,7 +23,7 @@ const RARITY_STYLES: Record<Rarity, { border: string, bg: string, text: string, 
   common:   { border: "border-slate-300", bg: "bg-slate-50", text: "text-slate-600", label: "Common" },
   uncommon: { border: "border-emerald-400", bg: "bg-emerald-50", text: "text-emerald-700", label: "Uncommon" },
   rare:     { border: "border-blue-400", bg: "bg-blue-50", text: "text-blue-700", label: "Rare" },
-  mythic:   { border: "border-orange-500", bg: "bg-slate-900", text: "text-orange-400", label: "Mythic!" },
+  mythic:   { border: "border-accent", bg: "bg-slate-900", text: "text-accent", label: "Mythic!" },
 };
 
 const EFFECT_ICONS = {

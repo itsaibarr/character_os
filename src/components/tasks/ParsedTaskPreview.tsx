@@ -5,7 +5,7 @@ import { CheckSquare, Square, Plus, Loader2 } from "lucide-react";
 import { clsx } from "clsx";
 import { toast } from "sonner";
 import { createTask } from "@/app/actions/tasks";
-import type { ExtractedTask } from "@/app/actions/nlp";
+import type { ExtractedTask } from "@/lib/gamification/types";
 
 interface ParsedTaskPreviewProps {
   tasks: ExtractedTask[];
@@ -20,7 +20,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 const DIFFICULTY_COLORS: Record<string, string> = {
-  high: "text-orange-500 bg-orange-50 border-orange-200",
+  high: "text-accent bg-accent-muted border-accent/30",
   medium: "text-sky-600 bg-sky-50 border-sky-200",
   low: "text-emerald-600 bg-emerald-50 border-emerald-200",
 };
@@ -102,7 +102,7 @@ export default function ParsedTaskPreview({
                 isSelected ? "bg-white hover:bg-slate-50/60" : "bg-slate-50/40 opacity-60",
               )}
             >
-              <div className="mt-0.5 shrink-0 text-orange-500">
+              <div className="mt-0.5 shrink-0 text-accent">
                 {isSelected ? (
                   <CheckSquare className="w-4 h-4" />
                 ) : (
@@ -168,7 +168,7 @@ export default function ParsedTaskPreview({
           className={clsx(
             "flex items-center gap-1.5 px-3 py-1.5 rounded text-[12px] font-semibold transition-all",
             selectedCount > 0 && !isPending
-              ? "bg-orange-500 text-white hover:bg-orange-600"
+              ? "bg-accent text-white hover:opacity-90"
               : "bg-slate-100 text-slate-400 cursor-not-allowed",
           )}
         >

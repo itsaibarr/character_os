@@ -12,9 +12,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { clsx } from "clsx";
-import type { AnalyticsInsights, AttributeDrift } from "@/app/actions/analytics";
-import { STAT_LABELS } from "@/app/actions/analytics";
-import type { StreakStatus } from "@/app/actions/streak";
+import type { AnalyticsInsights, AttributeDrift, StreakStatus } from "@/lib/gamification/types";
+import { STAT_LABELS } from "@/lib/gamification/types";
 
 interface InsightsPanelProps {
   insights: AnalyticsInsights | null;
@@ -50,7 +49,7 @@ export default function InsightsPanel({
             Insights
           </span>
           {collapsed && warningCount > 0 && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 border border-orange-200">
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-accent-muted text-accent border border-accent/20">
               {warningCount}
             </span>
           )}
@@ -174,7 +173,7 @@ function InsightRows({
       <div className="px-4 py-2">
         <a
           href="/analytics"
-          className="text-[11px] text-muted hover:text-orange-500 transition-colors font-medium"
+          className="text-[11px] text-muted hover:text-accent transition-colors font-medium"
         >
           View full analytics →
         </a>
@@ -194,7 +193,7 @@ function DriftRow({ drift }: { drift: AttributeDrift }) {
           <TrendingDown className="w-3.5 h-3.5" />
         )
       }
-      color="text-orange-500"
+      color="text-accent"
       label={`${STAT_LABELS[drift.attribute]} ${isRising ? "rising" : "lagging"} (${isRising ? "+" : "-"}${drift.deltaPct}%)`}
     />
   );
