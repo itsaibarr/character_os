@@ -539,3 +539,181 @@ export async function getEvolutionStatus(): Promise<{ nodes: EvolutionNode[] }> 
     return { nodes: [] };
   }
 }
+
+/**
+ * Awards rewards when a boss is defeated: bonus XP + guaranteed rare+ loot.
+ * Called from toggleTaskStatus when boss HP reaches 0.
+ */
+export async function awardBossDefeatRewards(
+  userId: string,
+  bossId: string,
+): Promise<{ bonusXp: number; lootDrop: { itemId: string; itemName: string; rarity: string; description: string } | null }> {
+  const supabase = await createClient();
+
+  // 1. Sum total damage from all linked tasks to calculate bonus XP
+  const { data: linkedTasks } = await supabase
+    .from('tasks')
+    .select('priority')
+    .eq('boss_id', bossId)
+    .eq('user_id', userId);
+
+  const computeDamage = (priority: string) =>
+    priority === 'high' ? 30 : priority === 'medium' ? 20 : 10;
+
+  const totalDamage = (linkedTasks ?? []).reduce((sum, t) => sum + computeDamage(t.priority), 0);
+  const bonusXp = Math.round(totalDamage * 0.5);
+
+  // 2. Award bonus XP evenly across all stats
+  if (bonusXp > 0) {
+    const perStat = Math.round(bonusXp / 6);
+
+    const { data: userData } = await supabase
+      .from('user')
+      .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp')
+      .eq('id', userId)
+      .single();
+
+    if (userData) {
+      await supabase
+        .from('user')
+        .update({
+          strength_xp: (userData.strength_xp ?? 0) + perStat,
+          intellect_xp: (userData.intellect_xp ?? 0) + perStat,
+          discipline_xp: (userData.discipline_xp ?? 0) + perStat,
+          charisma_xp: (userData.charisma_xp ?? 0) + perStat,
+          creativity_xp: (userData.creativity_xp ?? 0) + perStat,
+          spirituality_xp: (userData.spirituality_xp ?? 0) + perStat,
+        })
+        .eq('id', userId);
+    }
+
+    await supabase.from('logs').insert({
+      user_id: userId,
+      content: `Boss Defeat Bonus: +${bonusXp} XP (${perStat} per stat)`,
+      activity_type: 'System',
+    });
+  }
+
+  // 3. Guaranteed rare+ loot drop (5.0x multiplier heavily biases toward rare/mythic)
+  const { rollForLootRarity } = await import('@/lib/gamification/rng');
+  const { getRandomItemByRarity } = await import('@/lib/gamification/item-catalog');
+
+  let guaranteedRarity = rollForLootRarity(5.0);
+  // Floor at 'rare' — boss drops are always rare or better
+  if (guaranteedRarity === 'none' || guaranteedRarity === 'common' || guaranteedRarity === 'uncommon') {
+    guaranteedRarity = 'rare';
+  }
+
+  const droppedItem = getRandomItemByRarity(guaranteedRarity);
+  let lootDrop = null;
+
+  if (droppedItem) {
+    // Upsert to inventory
+    const { data: existing } = await supabase
+      .from('inventory')
+      .select('id, quantity')
+      .eq('user_id', userId)
+      .eq('item_id', droppedItem.id)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase
+        .from('inventory')
+        .update({ quantity: existing.quantity + 1 })
+        .eq('id', existing.id);
+    } else {
+      await supabase
+        .from('inventory')
+        .insert({
+          user_id: userId,
+          item_id: droppedItem.id,
+          quantity: 1,
+        });
+    }
+
+    lootDrop = {
+      itemId: droppedItem.id,
+      itemName: droppedItem.name,
+      rarity: droppedItem.rarity,
+      description: droppedItem.description,
+    };
+
+    await supabase.from('logs').insert({
+      user_id: userId,
+      content: `Boss Loot: ${droppedItem.name} (${droppedItem.rarity.toUpperCase()})`,
+      activity_type: 'System',
+    });
+  }
+
+  return { bonusXp, lootDrop };
+}
+
+/**
+ * Marks expired active bosses as 'escaped'.
+ * Should be called on dashboard load or via cron.
+ */
+export async function checkExpiredBosses(): Promise<ActionResponse<{ expiredCount: number }>> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
+    const now = new Date().toISOString();
+
+    const { data: expired, error } = await supabase
+      .from('bosses')
+      .update({ status: 'escaped' })
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .lt('expires_at', now)
+      .select('id');
+
+    if (error) throw error;
+
+    const expiredCount = expired?.length ?? 0;
+
+    if (expiredCount > 0) {
+      await supabase.from('logs').insert({
+        user_id: user.id,
+        content: `${expiredCount} boss${expiredCount > 1 ? 'es' : ''} escaped! Time ran out.`,
+        activity_type: 'System',
+      });
+    }
+
+    return { success: true, data: { expiredCount } };
+  } catch (error) {
+    console.error('[checkExpiredBosses] Error:', error);
+    return { success: false, error: "Failed to check expired bosses" };
+  }
+}
+
+/**
+ * Fetches the last 5 past bosses (defeated or escaped) for the boss history panel.
+ */
+export async function getBossHistory(): Promise<import("@/lib/gamification/types").BossHistoryEntry[]> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data: bosses } = await supabase
+      .from('bosses')
+      .select('id, title, status, updated_at')
+      .eq('user_id', user.id)
+      .in('status', ['defeated', 'escaped'])
+      .order('updated_at', { ascending: false })
+      .limit(5);
+
+    if (!bosses) return [];
+
+    return bosses.map(b => ({
+      id: b.id,
+      title: b.title,
+      outcome: b.status as 'defeated' | 'escaped',
+      completedAt: b.updated_at,
+    }));
+  } catch (error) {
+    console.error('[getBossHistory] Error:', error);
+    return [];
+  }
+}
