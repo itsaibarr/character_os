@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { LayoutDashboard, ListTodo, Radio } from "lucide-react";
+import { LayoutDashboard, ListTodo, Radio, Package } from "lucide-react";
 import { clsx } from "clsx";
 
 const NAV_ITEMS = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/tasks",     icon: ListTodo,        label: "Tasks"     },
   { href: "/radar",     icon: Radio,           label: "Radar"     },
+  { href: "/inventory", icon: Package,         label: "Inventory" },
 ];
 
 interface AppSidebarProps {
