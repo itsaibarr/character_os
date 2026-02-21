@@ -6,6 +6,8 @@ import { enforceRateLimit } from "@/lib/security/rate-limit";
 import { generateDailyQuests, generateMentorDialogue } from "@/lib/ai";
 import { calculateDifficultyAdjustments } from "@/lib/gamification/math";
 
+import type { Boss, BossAttack } from "@/components/dashboard/gamification/WeeklyBossBoard";
+
 // Define strict return types
 export type ActionResponse<T = unknown> = {
   success: boolean;
@@ -339,3 +341,62 @@ export async function getGuildAnalytics(guildId: string): Promise<ActionResponse
   }
 }
 
+/**
+ * Fetches the user's current active weekly boss and its linked task attacks.
+ * Returns null if no active boss exists.
+ */
+export async function getActiveWeeklyBoss(): Promise<{
+  boss: Boss;
+  attacks: BossAttack[];
+} | null> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    // Fetch the active boss
+    const { data: bossRow } = await supabase
+      .from('bosses')
+      .select('id, title, description, hp_total, hp_current, expires_at')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!bossRow) return null;
+
+    // Fetch linked tasks (attacks)
+    const { data: tasks } = await supabase
+      .from('tasks')
+      .select('id, content, priority, status')
+      .eq('boss_id', bossRow.id)
+      .eq('user_id', user.id);
+
+    if (!tasks) return null;
+
+    const computeDamage = (priority: string) =>
+      priority === 'high' ? 30 : priority === 'medium' ? 20 : 10;
+
+    const attacks: BossAttack[] = tasks.map(t => ({
+      id: t.id,
+      title: t.content,
+      damage: computeDamage(t.priority),
+      completed: t.status === 'completed',
+    }));
+
+    const boss: Boss = {
+      id: bossRow.id,
+      title: bossRow.title,
+      description: bossRow.description ?? '',
+      hpTotal: bossRow.hp_total,
+      hpCurrent: bossRow.hp_current,
+      expiresAt: bossRow.expires_at,
+    };
+
+    return { boss, attacks };
+  } catch (error) {
+    console.error('[getActiveWeeklyBoss] Error:', error);
+    return null;
+  }
+}
