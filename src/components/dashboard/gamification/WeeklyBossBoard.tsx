@@ -21,14 +21,68 @@ export interface BossAttack {
 }
 
 interface WeeklyBossBoardProps {
-  boss: Boss;
+  boss?: Boss;
   attacks: BossAttack[];
   onAttackToggle?: (attackId: string, completed: boolean) => void;
+  onGenerateBoss?: () => void;
+  generatingBoss?: boolean;
 }
 
-export default function WeeklyBossBoard({ boss, attacks, onAttackToggle }: WeeklyBossBoardProps) {
-  const hpPercent = Math.max(0, Math.min(100, (boss.hpCurrent / boss.hpTotal) * 100));
-  const isDefeated = boss.hpCurrent <= 0;
+export default function WeeklyBossBoard({
+  boss,
+  attacks,
+  onAttackToggle,
+  onGenerateBoss,
+  generatingBoss = false,
+}: WeeklyBossBoardProps) {
+  const hpPercent = boss ? Math.max(0, Math.min(100, (boss.hpCurrent / boss.hpTotal) * 100)) : 0;
+  const isDefeated = boss ? boss.hpCurrent <= 0 : false;
+
+  // Empty state — no active boss
+  if (!boss) {
+    return (
+      <div className="w-full border border-border bg-slate-50/50 p-4 rounded-sm">
+        <div className="flex items-start justify-between mb-4">
+          <h2 className="text-sm font-black text-text uppercase tracking-widest leading-none flex items-center gap-2">
+            <Skull size={14} className="text-orange-500" />
+            Weekly Boss
+          </h2>
+        </div>
+
+        <div className="flex flex-col items-center justify-center py-8 gap-4">
+          <div className="w-10 h-10 rounded-full bg-slate-100 border border-border flex items-center justify-center">
+            <Skull size={18} className="text-slate-300" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-bold text-text mb-1">No Active Boss</p>
+            <p className="text-[11px] text-muted max-w-[220px] leading-relaxed">
+              Link your pending tasks to a weekly boss to track completion as combat.
+            </p>
+          </div>
+          <button
+            onClick={onGenerateBoss}
+            disabled={generatingBoss || !onGenerateBoss}
+            className="px-3 py-1.5 text-xs font-bold uppercase tracking-widest border border-border rounded-sm bg-white hover:border-slate-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+          >
+            {generatingBoss ? (
+              <>
+                <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                Summoning...
+              </>
+            ) : (
+              <>
+                <Flame size={12} className="text-orange-500" />
+                Summon Boss
+              </>
+            )}
+          </button>
+          {!onGenerateBoss && (
+            <p className="text-[10px] text-faint">Add at least 3 pending tasks first.</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full border border-border bg-slate-50/50 p-4 rounded-sm">
