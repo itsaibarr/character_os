@@ -108,8 +108,8 @@ export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksP
   });
 
   return (
-    <div className="flex-1 h-full w-full overflow-hidden bg-white">
-      <div className="max-w-7xl mx-auto h-full px-6 flex relative">
+    <div className="flex-1 h-full w-full overflow-hidden bg-canvas">
+      <div className="max-w-7xl mx-auto h-full flex relative">
         {/* Sidebar */}
         <div className="w-[220px] shrink-0 flex flex-col py-10 pr-6">
           <nav className="space-y-0.5">
@@ -121,15 +121,15 @@ export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksP
                   onClick={() => setFilter(f.id)}
                   className={clsx(
                     "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all relative group",
-                    active 
-                      ? "text-primary" 
-                      : "text-slate-500 hover:bg-slate-100/80 hover:text-slate-900"
+                    active
+                      ? "text-accent"
+                      : "text-muted hover:bg-slate-100/80 hover:text-text"
                   )}
                 >
                   {active && (
                     <motion.div
                       layoutId="active-task-filter"
-                      className="absolute inset-0 bg-blue-50/50 border border-blue-100/50 rounded-lg"
+                      className="absolute inset-0 bg-accent-muted/60 border border-accent/15 rounded-lg"
                       initial={false}
                       transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
                     />
@@ -141,7 +141,7 @@ export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksP
                   {f.count !== null && (
                     <span className={clsx(
                       "text-[11px] font-bold px-2 py-0.5 rounded-full relative z-10 transition-colors",
-                      active ? "bg-blue-100 text-primary" : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
+                      active ? "bg-accent-muted text-accent" : "bg-slate-100 text-muted group-hover:bg-slate-200"
                     )}>
                       {f.count}
                     </span>
@@ -161,7 +161,7 @@ export default function TasksPageClient({ initialTasks, onToggleStatus }: TasksP
           >
             <div className="flex-1 overflow-y-auto px-10 py-10">
               <header className="mb-10">
-                <h1 className="text-3xl font-black tracking-tight text-slate-900 capitalize px-1">
+                <h1 className="text-2xl font-black tracking-tight text-text capitalize">
                   {filter}
                 </h1>
               </header>
