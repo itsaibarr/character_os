@@ -12,10 +12,10 @@ interface Task {
   status: "todo" | "in-progress" | "completed" | "failed";
   priority: "low" | "medium" | "high";
   difficulty: "low" | "medium" | "high";
-  parent_task_id?: string | null;
-  due_date?: string | null;
-  description?: string | null;
-  xp_reward?: number | null;
+  parent_task_id: string | null;
+  due_date: string | null;
+  description: string | null;
+  xp_reward: number | null;
   str_weight?: number;
   int_weight?: number;
   dis_weight?: number;
@@ -78,10 +78,10 @@ export default function TaskStackWrapper({ refreshKey, onStatusToggled }: TaskSt
         onSelectTask={setSelectedTaskId}
       />
       <AnimatePresence>
-        {selectedTaskId && (
+        {selectedTask && (
           <TaskDetail
-            task={selectedTask as any}
-            subtasks={selectedSubtasks as any}
+            task={selectedTask}
+            subtasks={selectedSubtasks}
             onClose={handleClose}
             onDeleted={handleClose}
             onToggleStatus={handleToggleStatus}
