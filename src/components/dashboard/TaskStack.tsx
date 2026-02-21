@@ -301,9 +301,12 @@ export default function TaskStack({ tasks, allTasks, onToggleStatus, onSelectTas
                     {!isLast && <div className="flex-1 w-px bg-border-faint ml-1" />}
                   </div>
 
-                  <div className="flex items-center gap-3 py-2 border-b border-border-faint hover:bg-slate-50 transition-colors flex-1 min-w-0 pr-1">
+                  <div
+                    className="flex items-center gap-3 py-2 border-b border-border-faint hover:bg-slate-50 transition-colors flex-1 min-w-0 pr-1 cursor-pointer"
+                    onClick={() => onSelectTask?.(child.id)}
+                  >
                     <button
-                      onClick={() => onToggleStatus(child.id)}
+                      onClick={e => { e.stopPropagation(); onToggleStatus(child.id); }}
                       className={clsx(
                         "w-3 h-3 rounded-full border flex items-center justify-center shrink-0 transition-all",
                         child.status === "completed"
@@ -353,13 +356,14 @@ export default function TaskStack({ tasks, allTasks, onToggleStatus, onSelectTas
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, x: -10 }}
         transition={{ duration: 0.2, delay: animIndex * 0.04 }}
-        className="flex items-center gap-3 py-2.5 border-b border-border-faint hover:bg-slate-50 transition-colors group"
+        className="flex items-center gap-3 py-2.5 border-b border-border-faint hover:bg-slate-50 transition-colors group cursor-pointer"
+        onClick={() => onSelectTask?.(task.id)}
       >
         <div className="w-4 flex items-center justify-center shrink-0">
           <span className="text-[10px] text-faint">↳</span>
         </div>
         <button
-          onClick={() => onToggleStatus(task.id)}
+          onClick={e => { e.stopPropagation(); onToggleStatus(task.id); }}
           className={clsx(
             "w-3 h-3 rounded-full border flex items-center justify-center shrink-0 transition-all",
             task.status === "completed"
