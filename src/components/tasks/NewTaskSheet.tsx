@@ -4,7 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Plus, Loader2 } from "lucide-react";
 import { clsx } from "clsx";
-import { createTask } from "@/app/actions/tasks";
+import { createTask, getTaskAnalysis } from "@/app/actions/tasks";
+import { TaskAnalysis } from "@/lib/ai";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface Task {
   id: string;
@@ -28,7 +30,37 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
   const [parentTaskId, setParentTaskId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<TaskAnalysis | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
+
+  const debouncedContent = useDebounce(content, 800);
+  const debouncedDescription = useDebounce(description, 800);
+
+  useEffect(() => {
+    async function analyze() {
+      if (!debouncedContent.trim()) {
+        setAnalysis(null);
+        return;
+      }
+
+      setIsAnalyzing(true);
+      try {
+        const result = await getTaskAnalysis({
+          content: debouncedContent,
+          description: debouncedDescription,
+          priority,
+          difficulty
+        });
+        setAnalysis(result);
+      } catch (err) {
+        console.error("Analysis failed:", err);
+      } finally {
+        setIsAnalyzing(false);
+      }
+    }
+    analyze();
+  }, [debouncedContent, debouncedDescription, priority, difficulty]);
 
   useEffect(() => {
     if (open) {
@@ -171,7 +203,53 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
               {error && (
                 <p className="text-sm text-red-500 font-medium bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
               )}
-              <p className="text-[11px] text-slate-400 font-medium">Stat weights will be classified by AI after creation.</p>
+
+              {/* AI Analysis Preview */}
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AI Preview</h3>
+                  {isAnalyzing && <Loader2 className="w-3 h-3 text-slate-400 animate-spin" />}
+                </div>
+
+                {analysis ? (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(analysis.statWeights).map(([stat, weight]) => {
+                        if (weight === 0) return null;
+                        return (
+                          <div key={stat} className="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded-md shadow-sm">
+                            <span className="text-[10px] font-extrabold text-slate-400 uppercase">{stat}</span>
+                            <span className="text-xs font-bold text-primary">+{weight}</span>
+                          </div>
+                        );
+                      })}
+                      {Object.values(analysis.statWeights).every(w => w === 0) && (
+                        <span className="text-xs text-slate-400 italic">No specific stats identified yet.</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Estimated XP</span>
+                        <div className="flex items-center gap-1.5">
+                           <span className="text-lg font-black text-slate-900">{analysis.estimatedXP}</span>
+                           <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">XP</span>
+                        </div>
+                      </div>
+                      
+                      {analysis.insights.length > 0 && (
+                        <div className="text-[10px] text-slate-400 italic text-right max-w-[150px]">
+                          "{analysis.insights[0]}"
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-slate-400 font-medium italic">
+                    Start typing to see AI analysis and stat gains...
+                  </p>
+                )}
+              </div>
             </form>
 
             <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-end space-x-3">

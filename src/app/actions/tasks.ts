@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import { classifyTaskStats, TaskInput, TaskAnalysis } from "@/lib/ai";
+import { classifyTaskStats, extractTasksFromPrompt, TaskInput, TaskAnalysis } from "@/lib/ai";
 import { getCharacterType, getCharacterStage } from "@/lib/character";
 
 async function getUser() {
@@ -30,11 +30,15 @@ export async function getUserStats() {
   if (!user) return null;
 
   const supabase = await createClient();
-  const { data: userData } = await supabase
+  const { data: userData, error } = await supabase
     .from('user')
-    .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp, level, archetype')
+    .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp, archetype')
     .eq('id', user.id)
     .single();
+
+  if (error) {
+    console.error("getUserStats error:", error);
+  }
 
   if (!userData) return null;
 
@@ -119,6 +123,81 @@ export async function createTask(
   revalidatePath("/tasks");
 
   return data?.id ?? null;
+}
+
+export async function createTasksFromPrompt(prompt: string) {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const localTime = new Date().toLocaleString("en-US", { timeZoneName: "short" });
+  const extractedTasks = await extractTasksFromPrompt(prompt, localTime);
+
+  const supabase = await createClient();
+  const createdTaskIds: string[] = [];
+
+  for (const extracted of extractedTasks) {
+    // 1. Get stats for this specific extracted task
+    const analysis = await classifyTaskStats({
+      content: extracted.content,
+      description: extracted.description,
+      priority: extracted.priority,
+      difficulty: extracted.difficulty,
+    });
+
+    // 2. Insert the parent task
+    const { data: parentTask, error: parentError } = await supabase
+      .from('tasks')
+      .insert({
+        user_id: user.id,
+        content: extracted.content,
+        description: extracted.description ?? null,
+        priority: extracted.priority,
+        difficulty: extracted.difficulty,
+        status: "todo",
+        due_date: extracted.due_date ?? null,
+        str_weight: analysis.statWeights.str,
+        int_weight: analysis.statWeights.int,
+        dis_weight: analysis.statWeights.dis,
+        cha_weight: analysis.statWeights.cha,
+        cre_weight: analysis.statWeights.cre,
+        spi_weight: analysis.statWeights.spi,
+      })
+      .select('id')
+      .single();
+
+    if (parentError || !parentTask) {
+      console.error("Failed to create extracted task:", parentError);
+      continue;
+    }
+
+    createdTaskIds.push(parentTask.id);
+
+    // 3. Insert any subtasks
+    if (extracted.subtasks && extracted.subtasks.length > 0) {
+      for (const subtaskContent of extracted.subtasks) {
+        // Simple fallback weights for subtasks, or we could run AI classification again
+        // To save time/tokens, we just use a default or keyword fallback for subtasks
+        
+        await supabase
+          .from('tasks')
+          .insert({
+            user_id: user.id,
+            content: subtaskContent,
+            priority: "medium",
+            difficulty: "medium",
+            status: "todo",
+            parent_task_id: parentTask.id,
+            // default weights for subtasks to not inflate XP too much
+            str_weight: 0, int_weight: 0, dis_weight: 1, cha_weight: 0, cre_weight: 0, spi_weight: 0
+          });
+      }
+    }
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/tasks");
+
+  return createdTaskIds;
 }
 
 export async function updateTask(
@@ -273,11 +352,15 @@ export async function toggleTaskStatus(taskId: string) {
       gains.discipline_xp = 1 * difficultyMultiplier;
     }
 
-    const { data: userData } = await supabase
+    const { data: userData, error } = await supabase
       .from('user')
-      .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp, level, archetype')
+      .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp, archetype')
       .eq('id', user.id)
       .single();
+      
+    if (error) {
+      console.error("toggleTaskStatus stat fetch error:", error);
+    }
 
     if (userData) {
       const getLevel = (xp: number) => Math.floor(xp / 60) + 1;
