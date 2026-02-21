@@ -2,7 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { getTasks, toggleTaskStatus } from "../actions/tasks";
 import TasksPageClient from "./TasksPageClient";
-import AppHeader from "@/components/AppHeader";
+import AppSidebar from "@/components/AppSidebar";
 
 export default async function TasksPage() {
   const supabase = await createClient();
@@ -17,9 +17,9 @@ export default async function TasksPage() {
   };
 
   return (
-    <div className="h-screen bg-[#F8FAFC] text-slate-900 selection:bg-blue-100 flex flex-col overflow-hidden">
-      <AppHeader userEmail={user.email ?? ""} currentPath="/tasks" />
-      <div className="flex-1 overflow-hidden">
+    <div className="h-screen bg-canvas text-text selection:bg-accent-muted overflow-hidden">
+      <AppSidebar userEmail={user.email ?? ""} />
+      <div className="ml-12 h-full overflow-hidden">
         <TasksPageClient initialTasks={allTasks} onToggleStatus={handleToggleTask} />
       </div>
     </div>
