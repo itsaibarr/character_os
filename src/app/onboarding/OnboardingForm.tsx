@@ -139,15 +139,22 @@ export default function OnboardingForm() {
 
   return (
     <div className="max-w-xl mx-auto w-full px-6 py-6">
-      <div className="mb-6">
-        <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+      <div className="mb-8 flex items-center gap-1.5">
+        {steps.map((_, i) => (
           <motion.div
-            className="h-full bg-primary shadow-[0_0_15px_rgba(0,86,210,0.4)]"
-            initial={{ width: "0%" }}
-            animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-            transition={{ type: "spring", stiffness: 80, damping: 20 }}
+            key={i}
+            animate={{
+              width: i === currentStep ? 20 : 8,
+              backgroundColor: i < currentStep ? "#0056D2" : i === currentStep ? "#0056D2" : "#e2e8f0",
+              opacity: i === currentStep ? 1 : i < currentStep ? 0.5 : 0.4,
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="h-1.5 rounded-full"
           />
-        </div>
+        ))}
+        <span className="ml-2 text-[10px] font-bold text-faint uppercase tracking-widest">
+          {currentStep + 1}/{steps.length}
+        </span>
       </div>
 
       <AnimatePresence mode="wait">
@@ -177,11 +184,11 @@ export default function OnboardingForm() {
                     className={clsx(
                       "p-3 rounded-xl border text-left flex items-center space-x-3 transition-all",
                       formData.focusAreas.includes(option.id)
-                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                        ? "bg-accent-muted text-accent border-accent"
+                        : "bg-canvas border-border text-text hover:border-slate-300"
                     )}
                   >
-                    <option.icon className={clsx("w-5 h-5", formData.focusAreas.includes(option.id) ? "text-white" : "text-primary")} />
+                    <option.icon className={clsx("w-5 h-5", formData.focusAreas.includes(option.id) ? "text-accent" : "text-muted")} />
                     <span className="font-semibold">{option.label}</span>
                   </motion.button>
                 ))}
@@ -200,12 +207,12 @@ export default function OnboardingForm() {
                     className={clsx(
                       "p-3 rounded-xl border text-left flex items-center space-x-3 transition-all",
                       formData.archetype === option.id
-                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                        ? "bg-accent-muted text-accent border-accent"
+                        : "bg-canvas border-border text-text hover:border-slate-300"
                     )}
                   >
-                    <div className={clsx("p-2 rounded-lg transition-colors", formData.archetype === option.id ? "bg-white/20" : "bg-secondary")}>
-                      <option.icon className={clsx("w-5 h-5", formData.archetype === option.id ? "text-white" : "text-primary")} />
+                    <div className={clsx("p-2 rounded-lg transition-colors", formData.archetype === option.id ? "bg-accent/10" : "bg-slate-50")}>
+                      <option.icon className={clsx("w-5 h-5", formData.archetype === option.id ? "text-accent" : "text-muted")} />
                     </div>
                     <span className="font-bold text-sm uppercase tracking-wider">{option.label}</span>
                   </motion.button>
@@ -223,8 +230,8 @@ export default function OnboardingForm() {
                     className={clsx(
                       "w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all",
                       formData.frictionProfile === option
-                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                        ? "bg-accent-muted text-accent border-accent"
+                        : "bg-canvas border-border text-text hover:border-slate-300"
                     )}
                   >
                     <span className="font-semibold">{option}</span>
@@ -244,8 +251,8 @@ export default function OnboardingForm() {
                     className={clsx(
                       "p-3 rounded-xl border text-center transition-all",
                       formData.dailyCapacity === option
-                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                        ? "bg-accent-muted text-accent border-accent"
+                        : "bg-canvas border-border text-text hover:border-slate-300"
                     )}
                   >
                     <span className="font-semibold">{option}</span>
@@ -264,8 +271,8 @@ export default function OnboardingForm() {
                     className={clsx(
                       "p-3 rounded-xl border text-left transition-all",
                       formData.feedbackPreference === option
-                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                        ? "bg-accent-muted text-accent border-accent"
+                        : "bg-canvas border-border text-text hover:border-slate-300"
                     )}
                   >
                     <span className="font-semibold">{option}</span>
@@ -284,8 +291,8 @@ export default function OnboardingForm() {
                     className={clsx(
                       "p-3 rounded-xl border text-center transition-all",
                       formData.trackingTools.includes(option)
-                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                        ? "bg-accent-muted text-accent border-accent"
+                        : "bg-canvas border-border text-text hover:border-slate-300"
                     )}
                   >
                     <span className="font-semibold">{option}</span>
@@ -304,8 +311,8 @@ export default function OnboardingForm() {
                     className={clsx(
                       "p-3 rounded-xl border text-left transition-all",
                       formData.acquisitionSource === option
-                        ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-primary/50 shadow-sm"
+                        ? "bg-accent-muted text-accent border-accent"
+                        : "bg-canvas border-border text-text hover:border-slate-300"
                     )}
                   >
                     <span className="font-semibold">{option}</span>
@@ -321,7 +328,7 @@ export default function OnboardingForm() {
                   rows={4}
                   value={formData.triggerReason}
                   onChange={(e) => setFormData({ ...formData, triggerReason: e.target.value })}
-                  className="w-full p-4 rounded-2xl border border-slate-200 bg-white text-base font-medium focus:ring-4 focus:ring-[var(--color-primary-ring)] focus:border-primary outline-none transition-all resize-none shadow-sm"
+                  className="w-full p-4 rounded-xl border border-border bg-canvas text-base font-medium focus:ring-2 focus:ring-[var(--color-accent-ring)] focus:border-accent outline-none transition-all resize-none"
                   placeholder="e.g. I realized my previous system was too bloated and I needed something cleaner..."
                 />
                 <p className="text-slate-400 text-sm">Min. 6 characters required to continue.</p>
@@ -335,7 +342,7 @@ export default function OnboardingForm() {
                   rows={4}
                   value={formData.mainGoal}
                   onChange={(e) => setFormData({ ...formData, mainGoal: e.target.value })}
-                  className="w-full p-4 rounded-2xl border border-slate-200 bg-white text-base font-medium focus:ring-4 focus:ring-[var(--color-primary-ring)] focus:border-primary outline-none transition-all resize-none shadow-sm"
+                  className="w-full p-4 rounded-xl border border-border bg-canvas text-base font-medium focus:ring-2 focus:ring-[var(--color-accent-ring)] focus:border-accent outline-none transition-all resize-none"
                   placeholder="e.g. Build my first profitable SaaS application while staying healthy."
                 />
                 <p className="text-slate-400 text-sm">Be specific. This defines your character path.</p>
@@ -346,7 +353,7 @@ export default function OnboardingForm() {
           <div className="pt-6 flex justify-between items-center">
             <button
               onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
-              className={clsx("text-slate-400 font-bold hover:text-slate-600 transition-colors", currentStep === 0 && "invisible")}
+              className={clsx("text-faint font-semibold hover:text-muted transition-colors", currentStep === 0 && "invisible")}
             >
               Back
             </button>
@@ -358,10 +365,10 @@ export default function OnboardingForm() {
                 onClick={handleNext}
                 disabled={!isStepValid() || isSubmitting}
                 className={clsx(
-                  "group flex items-center space-x-3 px-10 py-4 rounded-full font-bold transition-all shadow-xl",
+                  "group flex items-center space-x-3 px-8 py-3.5 rounded-full font-bold transition-all",
                   isStepValid() && !isSubmitting
-                    ? "bg-primary text-white hover:bg-primary-hover shadow-primary/20"
-                    : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                    ? "bg-accent text-white hover:brightness-110 active:scale-[0.98]"
+                    : "bg-slate-100 text-faint cursor-not-allowed"
                 )}
               >
                 <span className="text-base">{currentStep === steps.length - 1 ? (isSubmitting ? "Awakening..." : "Initialize Profile") : "Next Phase"}</span>
