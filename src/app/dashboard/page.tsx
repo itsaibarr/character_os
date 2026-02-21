@@ -105,54 +105,54 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-canvas text-text selection:bg-accent-muted">
       <AppSidebar userEmail={userEmail} />
 
-      <main className="ml-12 max-w-4xl mx-auto px-8 py-10 space-y-8">
-        <section>
-          <CharacterDisplay
-            characterType={userStats.characterType}
-            characterStage={userStats.characterStage}
-            level={userStats.level}
-            xpProgress={userStats.xpProgress}
-            stats={userStats.stats}
-          />
-        </section>
+      <main className="ml-12 px-8 py-10 h-screen flex flex-col">
+        {/* Two-column layout — fills the full screen width */}
+        <div className="flex gap-10 items-start flex-1 min-h-0">
+          {/* Left: character banner + command + stat grid + nav — fixed width */}
+          <div className="w-[540px] shrink-0 flex flex-col gap-8">
+            <CharacterDisplay
+              characterType={userStats.characterType}
+              characterStage={userStats.characterStage}
+              level={userStats.level}
+              xpProgress={userStats.xpProgress}
+              stats={userStats.stats}
+            />
+            <DashboardCommandWrapper onTaskCreated={() => {
+              setTaskRefreshKey(k => k + 1);
+              refreshStats();
+            }} />
+            <StatGrid
+              stats={userStats.stats}
+              level={userStats.level}
+              xpProgress={userStats.xpProgress}
+            />
+            <div className="flex items-center space-x-4">
+              <Link
+                href="/tasks"
+                className="px-4 py-2 text-sm font-medium text-accent bg-white border border-accent rounded-lg hover:bg-accent hover:text-white transition-colors"
+              >
+                View All Tasks
+              </Link>
+              <Link
+                href="/radar"
+                className="px-4 py-2 text-sm font-medium text-accent bg-white border border-accent rounded-lg hover:bg-accent hover:text-white transition-colors"
+              >
+                View Full Radar
+              </Link>
+            </div>
+          </div>
 
-        <section>
-          <DashboardCommandWrapper onTaskCreated={() => {
-            setTaskRefreshKey(k => k + 1);
-            refreshStats();
-          }} />
-        </section>
-
-        <section>
-          <StatGrid
-            stats={userStats.stats}
-            level={userStats.level}
-            xpProgress={userStats.xpProgress}
-          />
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-text mb-4">Active Commands</h2>
-          <TaskStackWrapper 
-            refreshKey={taskRefreshKey} 
-            onStatusToggled={refreshStats}
-          />
-        </section>
-
-        <section className="flex items-center justify-center space-x-4 pt-4">
-          <Link
-            href="/tasks"
-            className="px-4 py-2 text-sm font-medium text-accent bg-white border border-accent rounded-lg hover:bg-accent hover:text-white transition-colors"
-          >
-            View All Tasks
-          </Link>
-          <Link
-            href="/radar"
-            className="px-4 py-2 text-sm font-medium text-accent bg-white border border-accent rounded-lg hover:bg-accent hover:text-white transition-colors"
-          >
-            View Full Radar
-          </Link>
-        </section>
+          {/* Right: active commands — fills all remaining width, scrolls independently */}
+          <div className="flex-1 min-w-0 flex flex-col min-h-0 h-full">
+            <h2 className="text-xs font-black text-faint uppercase tracking-widest mb-3 shrink-0">Active Commands</h2>
+            <div className="flex-1 overflow-y-auto">
+              <TaskStackWrapper
+                refreshKey={taskRefreshKey}
+                onStatusToggled={refreshStats}
+              />
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );
