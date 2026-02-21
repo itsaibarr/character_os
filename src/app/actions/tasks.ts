@@ -4,6 +4,9 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { classifyTaskStats, extractTasksFromPrompt, TaskInput, TaskAnalysis } from "@/lib/ai";
 import { getCharacterType, getCharacterStage } from "@/lib/character";
+import { calculateSynergyMultiplier } from "@/lib/gamification/synergy";
+import { rollForLootRarity } from "@/lib/gamification/rng";
+import { isMilestoneLevel, determineEvolutionBranch } from "@/lib/gamification/progression";
 
 async function getUser() {
   const supabase = await createClient();
@@ -322,11 +325,45 @@ export async function toggleTaskStatus(taskId: string) {
   }
 
   if (newStatus === "completed") {
-    // 2. XP Formula
-    // difficultyMultiplier = low: 1x, medium: 1.5x, high: 2x
-    const difficultyMultiplier = task.difficulty === "high" ? 2 : task.difficulty === "medium" ? 1.5 : 1;
+    // 1. Fetch User Data First for Synergy and Difficulty bounds
+    const { data: userData, error } = await supabase
+      .from('user')
+      .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp, archetype')
+      .eq('id', user.id)
+      .single();
+        
+    const { data: diffData } = await supabase
+      .from('difficulty_adjustments')
+      .select('multiplier')
+      .eq('user_id', user.id)
+      .single();
 
-    let gains: Record<string, number> = {
+    const userMultiplierBounds = diffData?.multiplier || 1.0;
+
+    const statsObj = {
+      strength_xp: userData?.strength_xp ?? 0,
+      intellect_xp: userData?.intellect_xp ?? 0,
+      discipline_xp: userData?.discipline_xp ?? 0,
+      charisma_xp: userData?.charisma_xp ?? 0,
+      creativity_xp: userData?.creativity_xp ?? 0,
+      spirituality_xp: userData?.spirituality_xp ?? 0,
+    };
+
+    const weightsObj = {
+      str_weight: task.str_weight ?? 0,
+      int_weight: task.int_weight ?? 0,
+      dis_weight: task.dis_weight ?? 0,
+      cha_weight: task.cha_weight ?? 0,
+      cre_weight: task.cre_weight ?? 0,
+      spi_weight: task.spi_weight ?? 0,
+    };
+
+    // 2. XP Formula
+    const baseDifficultyMult = task.difficulty === "high" ? 2 : task.difficulty === "medium" ? 1.5 : 1;
+    const synergyMult = calculateSynergyMultiplier(weightsObj, statsObj);
+    const difficultyMultiplier = baseDifficultyMult * userMultiplierBounds * synergyMult;
+
+    const gains: Record<string, number> = {
       strength_xp: 0, intellect_xp: 0, discipline_xp: 0,
       charisma_xp: 0, creativity_xp: 0, spirituality_xp: 0,
     };
@@ -351,24 +388,18 @@ export async function toggleTaskStatus(taskId: string) {
       }
     } else {
       // calculated from stat weights * difficulty multiplier
-      gains.strength_xp = (task.str_weight ?? 0) * difficultyMultiplier;
-      gains.intellect_xp = (task.int_weight ?? 0) * difficultyMultiplier;
-      gains.discipline_xp = (task.dis_weight ?? 0) * difficultyMultiplier;
-      gains.charisma_xp = (task.cha_weight ?? 0) * difficultyMultiplier;
-      gains.creativity_xp = (task.cre_weight ?? 0) * difficultyMultiplier;
-      gains.spirituality_xp = (task.spi_weight ?? 0) * difficultyMultiplier;
+      gains.strength_xp = Math.round((task.str_weight ?? 0) * difficultyMultiplier);
+      gains.intellect_xp = Math.round((task.int_weight ?? 0) * difficultyMultiplier);
+      gains.discipline_xp = Math.round((task.dis_weight ?? 0) * difficultyMultiplier);
+      gains.charisma_xp = Math.round((task.cha_weight ?? 0) * difficultyMultiplier);
+      gains.creativity_xp = Math.round((task.cre_weight ?? 0) * difficultyMultiplier);
+      gains.spirituality_xp = Math.round((task.spi_weight ?? 0) * difficultyMultiplier);
     }
 
     // Ensure at least 1 discipline XP if all gains are 0
     if (Object.values(gains).every(v => v === 0)) {
-      gains.discipline_xp = 1 * difficultyMultiplier;
+      gains.discipline_xp = 1 * Math.max(1, Math.round(difficultyMultiplier));
     }
-
-    const { data: userData, error } = await supabase
-      .from('user')
-      .select('strength_xp, intellect_xp, discipline_xp, charisma_xp, creativity_xp, spirituality_xp, archetype')
-      .eq('id', user.id)
-      .single();
       
     if (error) {
       console.error("toggleTaskStatus stat fetch error:", error);
@@ -394,9 +425,34 @@ export async function toggleTaskStatus(taskId: string) {
                     newStats.charisma_xp + newStats.creativity_xp + newStats.spirituality_xp;
       const newLevel = getLevel(newXp);
 
-      // Check for character type change at level 5+
+      // Check for character type change at milestone levels (5, 10, 20...)
       let newArchetype = userData.archetype;
-      if (newLevel >= 5) {
+      
+      if (isMilestoneLevel(newLevel)) {
+        const statsObj = {
+          strength_xp: newStats.strength_xp,
+          intellect_xp: newStats.intellect_xp,
+          discipline_xp: newStats.discipline_xp,
+          charisma_xp: newStats.charisma_xp,
+          creativity_xp: newStats.creativity_xp,
+          spirituality_xp: newStats.spirituality_xp,
+        };
+        const branch = determineEvolutionBranch(statsObj);
+        // Only evolve if the branch logic returns a distinct class, or just assign it
+        // We fallback to standard getCharacterType if it's 'polymath' or 'novice' to keep existing logic
+        if (branch !== 'polymath' && branch !== 'novice') {
+            newArchetype = branch;
+        } else {
+            newArchetype = getCharacterType({
+              strength: newStats.strength_xp,
+              intellect: newStats.intellect_xp,
+              discipline: newStats.discipline_xp,
+              charisma: newStats.charisma_xp,
+              creativity: newStats.creativity_xp,
+              spirituality: newStats.spirituality_xp,
+            }, newLevel);
+        }
+      } else if (newLevel >= 5 && userData.archetype === 'novice') {
         const statsObj = {
           strength: newStats.strength_xp,
           intellect: newStats.intellect_xp,
@@ -408,15 +464,18 @@ export async function toggleTaskStatus(taskId: string) {
         newArchetype = getCharacterType(statsObj, newLevel);
       }
 
-      await supabase
+      const { error: updateError } = await supabase
         .from('user')
         .update({
           ...newStats,
-          level: newLevel,
           archetype: newArchetype,
           updatedAt: new Date().toISOString(),
         })
         .eq('id', user.id);
+
+      if (updateError) {
+        console.error("toggleTaskStatus user update error:", updateError);
+      }
 
       // Log events
       const gainsSummary = Object.entries(gains)
@@ -444,6 +503,40 @@ export async function toggleTaskStatus(taskId: string) {
           });
       }
 
+      // 3. RNG Loot Roll
+      let lootMessage = "";
+      const isBossTask = task.boss_id !== null && task.boss_id !== undefined;
+      const lootRoll = rollForLootRarity(isBossTask ? 2.0 : 1.0);
+      
+      if (lootRoll !== 'none') {
+          lootMessage = ` Found Loot: ${lootRoll.toUpperCase()} drop!`;
+          // Future phase: insert physical item row to `inventory`
+          // e.g. await supabase.from('inventory').insert({...});
+      }
+
+      if (lootMessage !== "") {
+          await supabase
+            .from('logs')
+            .insert({
+              user_id: user.id,
+              content: lootMessage.trim(),
+              activity_type: "System",
+            });
+      }
+
+      // 4. Boss Logic (Optional Phase 2)
+      if (isBossTask) {
+         const { data: boss } = await supabase.from('bosses').select('hp_current, hp_max').eq('id', task.boss_id).single();
+         if (boss && boss.hp_current > 0) {
+             const newHp = Math.max(0, boss.hp_current - 1);
+             await supabase.from('bosses').update({ hp_current: newHp }).eq('id', task.boss_id);
+             
+             if (newHp === 0) {
+                 await supabase.from('logs').insert({ user_id: user.id, content: `Defeated Boss!`, activity_type: "System" });
+             }
+         }
+      }
+
       if (newArchetype !== userData.archetype) {
         await supabase
           .from('logs')
@@ -453,9 +546,31 @@ export async function toggleTaskStatus(taskId: string) {
             activity_type: "System",
           });
       }
+      
+      let levelUp = null;
+      if (newLevel > oldLevel || newArchetype !== userData.archetype) {
+        levelUp = {
+          oldLevel,
+          newLevel,
+          oldArchetype: userData.archetype,
+          newArchetype,
+          isEvolution: newArchetype !== userData.archetype,
+        };
+      }
+      
+      revalidatePath("/dashboard");
+      revalidatePath("/tasks");
+      
+      return { gains, levelUp };
     }
+    
+    revalidatePath("/dashboard");
+    revalidatePath("/tasks");
+    
+    return { gains, levelUp: null };
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/tasks");
+  return { gains: null, levelUp: null };
 }
