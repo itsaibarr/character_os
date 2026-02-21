@@ -3,9 +3,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { enforceRateLimit } from "@/lib/security/rate-limit";
 import { extractTasksFromPrompt, type ExtractedTask } from "@/lib/ai";
-import type { ActionResponse } from "@/app/actions/gamification";
+import type { ActionResponse } from "@/lib/gamification/types";
 
-export type { ExtractedTask };
 
 /**
  * Parses unstructured text into a list of ExtractedTask objects.

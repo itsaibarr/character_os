@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { isSpamTask, isPlausibleCompletion } from './anti-cheat';
 
 describe('Anti-Cheat Utility: isSpamTask', () => {

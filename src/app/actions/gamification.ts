@@ -9,12 +9,7 @@ import { calculateDifficultyAdjustments } from "@/lib/gamification/math";
 import type { Boss, BossAttack, HeatmapDataPoint, EvolutionNode } from "@/lib/gamification/types";
 import { determineEvolutionBranch, type EvolutionBranch } from "@/lib/gamification/progression";
 
-// Define strict return types
-export type ActionResponse<T = unknown> = {
-  success: boolean;
-  data?: T;
-  error?: string;
-};
+import type { ActionResponse } from "@/lib/gamification/types";
 
 /**
  * Regenerates daily AI quests for the user.

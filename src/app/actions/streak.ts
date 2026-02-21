@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import type { ActionResponse } from "@/app/actions/gamification";
+import type { ActionResponse } from "@/lib/gamification/types";
 import { ITEM_CATALOG } from "@/lib/gamification/item-catalog";
 import {
   isStreakBroken,
@@ -15,7 +15,6 @@ import {
   type MilestoneReward,
 } from "@/lib/gamification/streak";
 
-export type { StreakStatus };
 
 /**
  * Returns the user's current streak status without any side effects.

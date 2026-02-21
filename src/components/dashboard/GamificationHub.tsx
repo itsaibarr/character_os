@@ -23,8 +23,7 @@ import { getActiveBuffs } from "@/app/actions/inventory";
 import { toggleTaskStatus } from "@/app/actions/tasks";
 import { getStreakStatus } from "@/app/actions/streak";
 import { getAnalyticsInsights } from "@/app/actions/analytics";
-import type { StreakStatus } from "@/app/actions/streak";
-import type { AnalyticsInsights } from "@/app/actions/analytics";
+import type { StreakStatus, AnalyticsInsights } from "@/lib/gamification/types";
 
 interface GamificationHubProps {
   /** Called after any action that changes the user's XP/stats,
