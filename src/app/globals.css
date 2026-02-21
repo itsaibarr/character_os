@@ -3,18 +3,28 @@
 
 @theme {
   --color-background: #ffffff;
-  --color-foreground: #1e293b;
+  --color-foreground: #0F172A;
 
   --font-sans: var(--font-sans);
 
-  --color-primary: #0056d2;
-  --color-primary-dark: #0049b0;
-  --color-primary-light: #e3f2fd;
-  --color-primary-ring: rgba(0, 86, 210, 0.15);
+  /* Accent (renamed from primary) */
+  --color-accent: #0056D2;
+  --color-accent-muted: #EEF4FF;
+  --color-accent-ring: rgba(0, 86, 210, 0.15);
 
-  --color-secondary: #e3f2fd;
-  --color-cta: #0056d2;
-  --color-text: #1e293b;
+  /* Layout surfaces */
+  --color-sidebar: #0F172A;
+  --color-canvas: #FFFFFF;
+  --color-base: #F8FAFC;
+
+  /* Borders */
+  --color-border: #E2E8F0;
+  --color-border-faint: #F1F5F9;
+
+  /* Text scale */
+  --color-text: #0F172A;
+  --color-muted: #64748B;
+  --color-faint: #94A3B8;
 
   --transition-soft: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -65,14 +75,14 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply w-full bg-primary text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:bg-primary-dark active:scale-[0.98];
+    @apply w-full bg-accent text-white font-medium py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:brightness-110 active:scale-[0.98];
   }
 
   .btn-secondary {
-    @apply w-full bg-white text-text border border-slate-200 font-medium py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98];
+    @apply w-full bg-white text-text border border-border font-medium py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98];
   }
 
   .input {
-    @apply w-full bg-white border border-slate-200 rounded-lg p-3 text-text focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-ring transition-all duration-200;
+    @apply w-full bg-white border border-border rounded-lg p-3 text-text focus:outline-none focus:border-accent focus:ring-2 focus:ring-[var(--color-accent-ring)] transition-all duration-200;
   }
 }
