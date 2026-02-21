@@ -10,6 +10,7 @@ import { isMilestoneLevel, determineEvolutionBranch } from "@/lib/gamification/p
 import { getRandomItemByRarity } from "@/lib/gamification/item-catalog";
 import { getActiveBuffMultiplier } from "@/lib/gamification/buffs";
 import { awardBossDefeatRewards } from "./gamification";
+import { checkAndUpdateStreak } from "@/app/actions/streak";
 
 async function getUser() {
   const supabase = await createClient();
@@ -530,6 +531,11 @@ export async function toggleTaskStatus(taskId: string) {
         p_user_id: user.id,
         p_date: today,
       });
+
+      // Update streak on task completion (fire-and-forget — streak errors shouldn't block task completion)
+      checkAndUpdateStreak().catch((err) =>
+        console.error("[toggleTaskStatus] Streak update failed:", err)
+      );
 
       // 3. RNG Loot Roll — persist to inventory
       let lootDrop: { itemId: string; itemName: string; rarity: string; description: string } | null = null;
