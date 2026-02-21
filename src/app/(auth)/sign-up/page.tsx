@@ -37,7 +37,7 @@ export default function SignUp() {
         <div className="w-full max-w-md p-8 bg-white rounded-xl border border-slate-200 shadow-xl text-center space-y-4">
           <h1 className="text-2xl font-bold text-slate-900">Check your email</h1>
           <p className="text-slate-500">We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.</p>
-          <Link href="/sign-in" className="text-primary hover:underline font-medium text-sm">Back to Sign In</Link>
+          <Link href="/sign-in" className="text-accent hover:underline font-medium text-sm">Back to Sign In</Link>
         </div>
       </div>
     )
@@ -89,7 +89,7 @@ export default function SignUp() {
               <label className="text-sm font-medium text-slate-700">Name</label>
               <input
                 type="text"
-                className="input w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 focus:outline-none focus:border-primary transition-colors"
+                className="input w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 focus:outline-none focus:border-accent transition-colors"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -98,7 +98,7 @@ export default function SignUp() {
               <label className="text-sm font-medium text-slate-700">Email</label>
               <input
                 type="email"
-                className="input w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 focus:outline-none focus:border-primary transition-colors"
+                className="input w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 focus:outline-none focus:border-accent transition-colors"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -107,7 +107,7 @@ export default function SignUp() {
               <label className="text-sm font-medium text-slate-700">Password</label>
               <input
                 type="password"
-                className="input w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 focus:outline-none focus:border-primary transition-colors"
+                className="input w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-900 focus:outline-none focus:border-accent transition-colors"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -123,7 +123,7 @@ export default function SignUp() {
           </button>
 
           <p className="text-center text-sm text-slate-500">
-            <Link href="/sign-in" className="text-primary hover:underline font-medium">Sign In</Link>
+            <Link href="/sign-in" className="text-accent hover:underline font-medium">Sign In</Link>
           </p>
         </div>
       </motion.div>

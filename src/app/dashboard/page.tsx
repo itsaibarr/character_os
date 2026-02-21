@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getUserStats } from "../actions/tasks";
 import StatGrid from "@/components/dashboard/StatGrid";
-import AppHeader from "@/components/AppHeader";
+import AppSidebar from "@/components/AppSidebar";
 import CharacterDisplay from "@/components/dashboard/CharacterDisplay";
 import DashboardCommandWrapper from "@/components/dashboard/DashboardCommandWrapper";
 
@@ -18,10 +18,10 @@ export default async function DashboardPage() {
   if (!userStats) redirect("/onboarding");
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 selection:bg-blue-100">
-      <AppHeader userEmail={user.email!} currentPath="/dashboard" />
+    <div className="min-h-screen bg-canvas text-text selection:bg-accent-muted">
+      <AppSidebar userEmail={user.email!} />
 
-      <main className="max-w-4xl mx-auto px-6 py-12 space-y-8">
+      <main className="ml-12 max-w-4xl mx-auto px-8 py-10 space-y-8">
         <section>
           <CharacterDisplay
             characterType={userStats.characterType}
@@ -47,13 +47,13 @@ export default async function DashboardPage() {
         <section className="flex items-center justify-center space-x-4 pt-4">
           <Link
             href="/tasks"
-            className="px-4 py-2 text-sm font-medium text-[#0056D2] bg-white border border-[#0056D2] rounded-lg hover:bg-[#0056D2] hover:text-white transition-colors"
+            className="px-4 py-2 text-sm font-medium text-accent bg-white border border-accent rounded-lg hover:bg-accent hover:text-white transition-colors"
           >
             View All Tasks
           </Link>
           <Link
             href="/radar"
-            className="px-4 py-2 text-sm font-medium text-[#0056D2] bg-white border border-[#0056D2] rounded-lg hover:bg-[#0056D2] hover:text-white transition-colors"
+            className="px-4 py-2 text-sm font-medium text-accent bg-white border border-accent rounded-lg hover:bg-accent hover:text-white transition-colors"
           >
             View Full Radar
           </Link>
