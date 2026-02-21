@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { motion } from "motion/react";
-import { Check, Trash2, Plus, Loader2, AlertCircle, Calendar, X } from "lucide-react";
+import { Check, Trash2, Plus, Loader2, Calendar, X } from "lucide-react";
 import { clsx } from "clsx";
 import { updateTask, deleteTask, createSubtask } from "@/app/actions/tasks";
 
@@ -106,53 +106,46 @@ export default function TaskDetail({ task, subtasks, onClose, onDeleted, onToggl
     startTransition(async () => { await updateTask(task.id, { description: trimmed || null }); setSavingField(null); });
   };
 
-  const SELECT_BASE = "w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all appearance-none";
+  const SELECT_BASE = "w-full bg-white border border-border rounded-lg px-3 py-2 text-sm font-medium text-text focus:outline-none focus:border-accent focus:ring-2 focus:ring-[var(--color-accent-ring)] transition-all appearance-none";
   const activeStatBadges = STAT_LABELS.filter(s => ((task[s.key] as number) ?? 0) > 0);
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center p-6 sm:p-12">
+    <div className="fixed inset-0 z-50">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         onClick={onClose}
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+        className="absolute inset-0 bg-black/20"
       />
-      
       <motion.div
         key={task.id}
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-4xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col"
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        className="absolute right-0 top-0 h-full w-[420px] bg-canvas border-l border-border shadow-xl flex flex-col overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-primary/5 flex items-center justify-center">
-              <AlertCircle className="w-4 h-4 text-primary" />
-            </div>
-            <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Objective Details</div>
-          </div>
-          <button 
-            onClick={onClose}
-            className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"
-          >
-            <X className="w-5 h-5" />
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+          <span className="text-[10px] font-black text-faint uppercase tracking-widest">Task Detail</span>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-faint hover:text-muted transition-colors">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8">
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {/* Title Section */}
           <div className="flex items-start gap-5">
             <button
               onClick={() => onToggleStatus(task.id)}
               className={clsx(
-                "mt-1.5 w-7 h-7 rounded-xl border-2 flex items-center justify-center shrink-0 transition-all", 
-                task.status === "completed" ? "bg-green-500 border-green-500" : "border-slate-200 hover:border-slate-400 shadow-sm"
+                "mt-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                task.status === "completed" ? "bg-accent border-accent" : "border-slate-300 hover:border-slate-400"
               )}
             >
-              {task.status === "completed" && <Check className="w-4 h-4 text-white" />}
+              {task.status === "completed" && <Check className="w-3 h-3 text-white" />}
             </button>
             <div className="flex-1 min-w-0">
               {editingTitle ? (
@@ -162,13 +155,13 @@ export default function TaskDetail({ task, subtasks, onClose, onDeleted, onToggl
                   onChange={e => setTitle(e.target.value)}
                   onBlur={saveTitle}
                   onKeyDown={e => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") { setTitle(task.content); setEditingTitle(false); } }}
-                  className="w-full text-2xl font-black tracking-tight text-slate-900 bg-transparent border-b-2 border-primary outline-none pb-1"
+                  className="w-full text-2xl font-black tracking-tight text-text bg-transparent border-b-2 border-accent outline-none pb-1"
                 />
               ) : (
                 <h2
                   onClick={() => setEditingTitle(true)}
                   className={clsx(
-                    "text-2xl font-black tracking-tight cursor-text hover:text-primary transition-colors leading-tight", 
+                    "text-2xl font-black tracking-tight cursor-text hover:text-accent transition-colors leading-tight",
                     task.status === "completed" ? "text-slate-400 line-through" : "text-slate-900"
                   )}
                 >
@@ -190,9 +183,9 @@ export default function TaskDetail({ task, subtasks, onClose, onDeleted, onToggl
                   onBlur={saveDescription}
                   placeholder="Detailed instructions..."
                   rows={4}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all resize-none shadow-sm"
+                  className="w-full bg-slate-50 border border-border rounded-lg px-4 py-3 text-sm font-medium text-text placeholder:text-faint focus:outline-none focus:border-accent focus:ring-2 focus:ring-[var(--color-accent-ring)] focus:bg-white transition-all resize-none"
                 />
-                {savingField === "description" && <span className="text-[9px] font-bold text-primary flex items-center gap-1.5 px-1"><Loader2 className="w-3 h-3 animate-spin" /> Syncing with neural link...</span>}
+                {savingField === "description" && <span className="text-[9px] font-bold text-accent flex items-center gap-1.5 px-1"><Loader2 className="w-3 h-3 animate-spin" /> Saving...</span>}
               </div>
 
               {/* Priority + Difficulty */}
@@ -219,7 +212,7 @@ export default function TaskDetail({ task, subtasks, onClose, onDeleted, onToggl
                   <input
                     type="date" value={dueDate}
                     onChange={e => { setDueDate(e.target.value); startTransition(async () => updateTask(task.id, { due_date: e.target.value || null })); }}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-slate-700 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all shadow-sm"
+                    className="w-full bg-slate-50 border border-border rounded-lg pl-11 pr-4 py-3 text-sm font-medium text-text focus:outline-none focus:border-accent focus:ring-2 focus:ring-[var(--color-accent-ring)] focus:bg-white transition-all"
                   />
                 </div>
               </div>
@@ -252,12 +245,12 @@ export default function TaskDetail({ task, subtasks, onClose, onDeleted, onToggl
                       onChange={e => setNewSubtaskContent(e.target.value)}
                       onKeyDown={async e => { if (e.key === "Enter" && newSubtaskContent.trim()) { setAddingSubtask(true); await createSubtask(task.id, newSubtaskContent.trim()); setNewSubtaskContent(""); setAddingSubtask(false); } }}
                       placeholder="Add sub-component..."
-                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-primary focus:bg-white transition-all"
+                      className="flex-1 bg-slate-50 border border-border rounded-lg px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-text placeholder:text-faint focus:outline-none focus:border-accent focus:bg-white transition-all"
                     />
                     <button
                       onClick={async () => { if (!newSubtaskContent.trim()) return; setAddingSubtask(true); await createSubtask(task.id, newSubtaskContent.trim()); setNewSubtaskContent(""); setAddingSubtask(false); }}
                       disabled={!newSubtaskContent.trim() || addingSubtask}
-                      className="p-2.5 bg-primary text-white rounded-xl hover:brightness-110 disabled:opacity-50 transition-all shadow-md shadow-primary/20"
+                      className="p-2 bg-accent text-white rounded-lg hover:brightness-110 disabled:opacity-50 transition-all"
                     >
                       {addingSubtask ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                     </button>
@@ -266,7 +259,7 @@ export default function TaskDetail({ task, subtasks, onClose, onDeleted, onToggl
               )}
 
               {/* XP Projection */}
-              <div className="space-y-3 p-6 bg-slate-900 rounded-3xl text-white shadow-xl shadow-slate-200">
+              <div className="space-y-3 p-5 bg-slate-900 rounded-2xl text-white">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">XP Matrix Projection</label>
                 <div className="text-lg font-black tracking-tight">{computeXpPreview(task)}</div>
                 {activeStatBadges.length > 0 && (
@@ -290,7 +283,7 @@ export default function TaskDetail({ task, subtasks, onClose, onDeleted, onToggl
         </div>
 
         {/* Footer */}
-        <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-border flex items-center justify-between shrink-0">
           {!showDeleteConfirm ? (
             <button onClick={() => setShowDeleteConfirm(true)} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-red-500 hover:text-red-600 transition-colors">
               <Trash2 className="w-4 h-4" /> Purge Objective
@@ -304,7 +297,6 @@ export default function TaskDetail({ task, subtasks, onClose, onDeleted, onToggl
               </div>
             </div>
           )}
-          <div className="text-[9px] font-bold text-slate-400 tracking-tighter uppercase opacity-40">Character OS // Protocol v1.6.2</div>
         </div>
       </motion.div>
     </div>
