@@ -6,9 +6,7 @@ import { enforceRateLimit } from "@/lib/security/rate-limit";
 import { generateDailyQuests, generateMentorDialogue } from "@/lib/ai";
 import { calculateDifficultyAdjustments } from "@/lib/gamification/math";
 
-import type { Boss, BossAttack } from "@/components/dashboard/gamification/WeeklyBossBoard";
-import type { HeatmapDataPoint } from "@/components/dashboard/gamification/AnalyticsHeatmap";
-import type { EvolutionNode } from "@/components/dashboard/gamification/EvolutionTree";
+import type { Boss, BossAttack, HeatmapDataPoint, EvolutionNode } from "@/lib/gamification/types";
 import { determineEvolutionBranch, type EvolutionBranch } from "@/lib/gamification/progression";
 
 // Define strict return types
@@ -365,7 +363,7 @@ export async function getActiveWeeklyBoss(): Promise<{
       .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (!bossRow) return null;
 
@@ -448,9 +446,9 @@ const BRANCH_META: Record<EvolutionBranch, BranchMeta> = {
   polymath: { name: 'Polymath', levelReq: 20, condition: 'Balanced across all stats' },
 };
 
-// What the user could evolve into next, based on current branch
+// What the user could evolve into next, based on current branch.
+// novice and polymath are omitted: novice is handled dynamically, polymath is the terminal branch.
 const NEXT_BRANCH: Partial<Record<EvolutionBranch, EvolutionBranch>> = {
-  novice:   'techno',
   beast:    'polymath',
   mystic:   'polymath',
   techno:   'polymath',
@@ -511,14 +509,29 @@ export async function getEvolutionStatus(): Promise<{ nodes: EvolutionNode[] }> 
     }
 
     // Node 3: next possible evolution
-    const nextBranchKey = NEXT_BRANCH[currentBranch] ?? 'polymath';
-    const nextMeta = BRANCH_META[nextBranchKey];
-    nodes.push({
-      id: nextBranchKey,
-      ...nextMeta,
-      isUnlocked: level >= nextMeta.levelReq,
-      isActive: false,
-    });
+    if (currentBranch === 'novice') {
+      // Show a generic "your path unlocks at level 5" node — stat bias is unknowable at zero XP
+      nodes.push({
+        id: 'path',
+        name: 'Your Path',
+        levelReq: 5,
+        condition: 'Determined by dominant stat at Level 5',
+        isUnlocked: false,
+        isActive: false,
+      });
+    } else {
+      const nextBranchKey = NEXT_BRANCH[currentBranch];
+      if (nextBranchKey) {
+        const nextMeta = BRANCH_META[nextBranchKey];
+        nodes.push({
+          id: nextBranchKey,
+          ...nextMeta,
+          isUnlocked: level >= nextMeta.levelReq,
+          isActive: false,
+        });
+      }
+      // polymath users have no "next" node — they have reached the terminal branch
+    }
 
     return { nodes };
   } catch (error) {

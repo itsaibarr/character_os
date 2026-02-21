@@ -4,11 +4,9 @@ import { memo, useMemo } from "react";
 
 import { clsx } from "clsx";
 import { Activity } from "lucide-react";
+import type { HeatmapDataPoint } from "@/lib/gamification/types";
 
-export interface HeatmapDataPoint {
-  date: string; // YYYY-MM-DD
-  count: number;
-}
+export type { HeatmapDataPoint };
 
 interface AnalyticsHeatmapProps {
   data: HeatmapDataPoint[];

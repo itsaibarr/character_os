@@ -3,22 +3,9 @@
 import { motion } from "motion/react";
 import { clsx } from "clsx";
 import { Check, Flame, Skull, Target } from "lucide-react";
+import type { Boss, BossAttack } from "@/lib/gamification/types";
 
-export interface Boss {
-  id: string;
-  title: string;
-  description: string;
-  hpTotal: number;
-  hpCurrent: number;
-  expiresAt: string;
-}
-
-export interface BossAttack {
-  id: string;
-  title: string;
-  damage: number;
-  completed: boolean;
-}
+export type { Boss, BossAttack };
 
 interface WeeklyBossBoardProps {
   boss?: Boss;

@@ -1,17 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 
-import WeeklyBossBoard, {
-  type Boss,
-  type BossAttack,
-} from "@/components/dashboard/gamification/WeeklyBossBoard";
-import EvolutionTree, {
-  type EvolutionNode,
-} from "@/components/dashboard/gamification/EvolutionTree";
-import AnalyticsHeatmap, {
-  type HeatmapDataPoint,
-} from "@/components/dashboard/gamification/AnalyticsHeatmap";
+import type { Boss, BossAttack, EvolutionNode, HeatmapDataPoint } from "@/lib/gamification/types";
+import WeeklyBossBoard from "@/components/dashboard/gamification/WeeklyBossBoard";
+import EvolutionTree from "@/components/dashboard/gamification/EvolutionTree";
+import AnalyticsHeatmap from "@/components/dashboard/gamification/AnalyticsHeatmap";
 
 import {
   getActiveWeeklyBoss,
@@ -46,14 +41,13 @@ export default function GamificationHub({ onStatChange }: GamificationHubProps) 
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAll()
       .catch(err => console.error('[GamificationHub] load error:', err))
       .finally(() => setLoading(false));
   }, [loadAll]);
 
   const handleAttackToggle = useCallback(
-    async (taskId: string) => {
+    async (taskId: string, _completed: boolean) => {
       await toggleTaskStatus(taskId);
       await loadAll();
       await onStatChange?.();
@@ -63,9 +57,16 @@ export default function GamificationHub({ onStatChange }: GamificationHubProps) 
 
   const handleGenerateBoss = useCallback(async () => {
     setGeneratingBoss(true);
-    await generateWeeklyBoss();
-    await loadAll();
-    setGeneratingBoss(false);
+    try {
+      const result = await generateWeeklyBoss();
+      if (!result.success) {
+        toast.error(result.error ?? 'Could not summon boss. Add at least 3 pending tasks first.');
+        return;
+      }
+      await loadAll();
+    } finally {
+      setGeneratingBoss(false);
+    }
   }, [loadAll]);
 
   if (loading) {
