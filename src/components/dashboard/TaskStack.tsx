@@ -214,43 +214,75 @@ export default function TaskStack({ tasks, allTasks, onToggleStatus, onSelectTas
         transition={{ duration: 0.2, delay: animIndex * 0.04 }}
       >
         {/* Parent row */}
-        <div className="flex items-center gap-3 py-2.5 border-b border-border-faint hover:bg-slate-50 transition-colors group">
-          <button
-            onClick={() => onToggleStatus(parent.id)}
-            className={clsx(
-              "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
-              parent.status === "completed"
-                ? "bg-accent border-accent"
-                : "border-slate-300 group-hover:border-slate-400"
-            )}
-          >
-            {parent.status === "completed" && <Check className="w-2.5 h-2.5 text-white" />}
-          </button>
+        <div
+          className="py-2.5 border-b border-border-faint hover:bg-slate-50 transition-colors group cursor-pointer"
+          onClick={() => onSelectTask?.(parent.id)}
+        >
+          {/* Line 1: checkbox · title · count · priority · stats */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={e => { e.stopPropagation(); onToggleStatus(parent.id); }}
+              className={clsx(
+                "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                parent.status === "completed"
+                  ? "bg-accent border-accent"
+                  : "border-slate-300 group-hover:border-slate-400"
+              )}
+            >
+              {parent.status === "completed" && <Check className="w-2.5 h-2.5 text-white" />}
+            </button>
 
-          <span
-            className={clsx(
-              "flex-1 text-sm font-medium truncate",
-              parent.status === "completed" ? "line-through text-faint" : "text-text"
-            )}
-          >
-            {parent.content}
-          </span>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {totalCount > 0 && (
-              <span className="text-[10px] font-medium text-faint tabular-nums">
-                {completedCount}/{totalCount}
-              </span>
-            )}
             <span
               className={clsx(
-                "w-1.5 h-1.5 rounded-full",
-                parent.priority === "high" ? "bg-red-400" :
-                parent.priority === "medium" ? "bg-amber-400" : "bg-slate-300"
+                "flex-1 text-sm font-medium truncate",
+                parent.status === "completed" ? "line-through text-faint" : "text-text"
               )}
-            />
-            <ActiveStatDots task={parent} />
+            >
+              {parent.content}
+            </span>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {totalCount > 0 && (
+                <span className="text-[10px] font-medium text-faint tabular-nums">
+                  {completedCount}/{totalCount}
+                </span>
+              )}
+              <span
+                className={clsx(
+                  "w-1.5 h-1.5 rounded-full",
+                  parent.priority === "high" ? "bg-red-400" :
+                  parent.priority === "medium" ? "bg-amber-400" : "bg-slate-300"
+                )}
+              />
+              <ActiveStatDots task={parent} />
+            </div>
           </div>
+
+          {/* Line 2: meta — due date · difficulty · XP */}
+          {(() => {
+            const xp = computeXp(parent);
+            const duePart = parent.due_date ? formatDueDate(parent.due_date) : null;
+            const diffLabel = DIFFICULTY_LABEL[parent.difficulty];
+            const hasMeta = duePart || xp > 0;
+            if (!hasMeta) return null;
+            return (
+              <div className="flex items-center gap-1 pl-7 mt-0.5 text-[10px] font-medium text-text/50">
+                {duePart && (
+                  <>
+                    <span className={duePart.className}>{duePart.label}</span>
+                    <span className="text-text/30">·</span>
+                  </>
+                )}
+                <span>{diffLabel}</span>
+                {xp > 0 && (
+                  <>
+                    <span className="text-text/30">·</span>
+                    <span className="text-emerald-500/70">+{xp} XP</span>
+                  </>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Subtask rows */}
