@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { motion } from "motion/react";
 import { CharacterType, CharacterStage, StatValues, getNextEvolutionLevel } from "@/lib/character";
 
@@ -29,7 +29,7 @@ function getImageSrc(characterType: CharacterType, characterStage: CharacterStag
   return `/characters/${characterType}/${characterStage}.png`;
 }
 
-export default function CharacterDisplay({
+function CharacterDisplay({
   characterType, characterStage, level, xpProgress,
 }: CharacterDisplayProps) {
   const [imgError, setImgError] = useState(false);
@@ -101,3 +101,5 @@ export default function CharacterDisplay({
     </motion.div>
   );
 }
+
+export default memo(CharacterDisplay);

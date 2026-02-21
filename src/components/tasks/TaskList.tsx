@@ -68,7 +68,7 @@ function formatDueDate(dateStr: string | null): string | null {
   return `Due ${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 }
 
-export default function TaskList({ tasks, filter, selectedTaskId, onSelectTask, onToggleStatus }: TaskListProps) {
+export default function TaskList({ tasks, selectedTaskId, onSelectTask, onToggleStatus }: TaskListProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [newContent, setNewContent] = useState("");
   const [isPending, setIsPending] = useState(false);

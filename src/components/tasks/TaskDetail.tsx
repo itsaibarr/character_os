@@ -59,7 +59,6 @@ export default function TaskDetail({ task, subtasks, onClose, onDeleted, onToggl
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [difficulty, setDifficulty] = useState<"low" | "medium" | "high">("medium");
   const [dueDate, setDueDate] = useState("");
-  const [xpReward, setXpReward] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
   const [newSubtaskContent, setNewSubtaskContent] = useState("");
   const [addingSubtask, setAddingSubtask] = useState(false);
@@ -68,17 +67,18 @@ export default function TaskDetail({ task, subtasks, onClose, onDeleted, onToggl
 
   useEffect(() => {
     if (!task) return;
+    /* eslint-disable react-hooks/set-state-in-effect */
     setTitle(task.content);
     setDescription(task.description ?? "");
     setPriority(task.priority);
     setDifficulty(task.difficulty);
     setDueDate(task.due_date ? task.due_date.split("T")[0] : "");
-    setXpReward(task.xp_reward != null ? String(task.xp_reward) : "");
     setEditingTitle(false);
     setShowDeleteConfirm(false);
     setAddingSubtask(false);
     setNewSubtaskContent("");
-  }, [task?.id]);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [task]);
 
   if (!task) {
     return (
@@ -192,13 +192,13 @@ export default function TaskDetail({ task, subtasks, onClose, onDeleted, onToggl
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Priority</label>
-                  <select value={priority} onChange={e => { const v = e.target.value as any; setPriority(v); startTransition(async () => updateTask(task.id, { priority: v })); }} className={SELECT_BASE}>
+                  <select value={priority} onChange={e => { const v = e.target.value as "low"|"medium"|"high"; setPriority(v); startTransition(async () => updateTask(task.id, { priority: v })); }} className={SELECT_BASE}>
                     <option value="low">Low Impact</option><option value="medium">Standard</option><option value="high">Critical</option>
                   </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Complexity</label>
-                  <select value={difficulty} onChange={e => { const v = e.target.value as any; setDifficulty(v); startTransition(async () => updateTask(task.id, { difficulty: v })); }} className={SELECT_BASE}>
+                  <select value={difficulty} onChange={e => { const v = e.target.value as "low"|"medium"|"high"; setDifficulty(v); startTransition(async () => updateTask(task.id, { difficulty: v })); }} className={SELECT_BASE}>
                     <option value="low">Simple</option><option value="medium">Moderate</option><option value="high">Advanced</option>
                   </select>
                 </div>
