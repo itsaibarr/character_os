@@ -1,13 +1,21 @@
 "use client";
 
 import DashboardCommand from "@/components/dashboard/DashboardCommand";
-import { createTask } from "@/app/actions/tasks";
+import { createTasksFromPrompt } from "@/app/actions/tasks";
 
-export default function DashboardCommandWrapper() {
+interface DashboardCommandWrapperProps {
+  onTaskCreated?: () => void;
+}
+
+export default function DashboardCommandWrapper({ onTaskCreated }: DashboardCommandWrapperProps) {
   const handleCreateTask = async (input: string) => {
-    const taskId = await createTask(input);
-    if (taskId) {
-      console.log("Task created successfully:", taskId);
+    const taskIds = await createTasksFromPrompt(input);
+    if (taskIds && taskIds.length > 0) {
+      console.log("Tasks created successfully:", taskIds);
+      // Trigger refresh callback if provided
+      if (onTaskCreated) {
+        onTaskCreated();
+      }
     }
   };
 

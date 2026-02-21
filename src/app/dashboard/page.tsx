@@ -1,25 +1,109 @@
-import { createClient } from "@/utils/supabase/server";
+"use client";
+
+import { useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getUserStats } from "../actions/tasks";
+import { getUserStats, getTasks, toggleTaskStatus } from "../actions/tasks";
+import { CharacterType, CharacterStage } from "@/lib/character";
 import StatGrid from "@/components/dashboard/StatGrid";
 import AppSidebar from "@/components/AppSidebar";
 import CharacterDisplay from "@/components/dashboard/CharacterDisplay";
 import DashboardCommandWrapper from "@/components/dashboard/DashboardCommandWrapper";
+import TaskStackWrapper from "@/components/dashboard/TaskStackWrapper";
 
-export default async function DashboardPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+interface Task {
+  id: string;
+  content: string;
+  status: "todo" | "in-progress" | "completed" | "failed";
+  priority: "low" | "medium" | "high";
+  difficulty: "low" | "medium" | "high";
+  str_weight?: number;
+  int_weight?: number;
+  dis_weight?: number;
+  cha_weight?: number;
+  cre_weight?: number;
+  spi_weight?: number;
+}
 
-  if (!user) redirect("/sign-in");
+interface UserStats {
+  stats: {
+    strength: number;
+    intellect: number;
+    discipline: number;
+    charisma: number;
+    creativity: number;
+    spirituality: number;
+  };
+  level: number;
+  xpProgress: number;
+  characterType: CharacterType;
+  characterStage: CharacterStage;
+}
 
-  const userStats = await getUserStats();
+export default function DashboardPage() {
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [taskRefreshKey, setTaskRefreshKey] = useState(0);
 
-  if (!userStats) redirect("/onboarding");
+  useEffect(() => {
+    async function loadData() {
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        redirect("/sign-in");
+        return;
+      }
+
+      setUserEmail(user.email || "");
+
+      const stats = await getUserStats();
+      if (!stats) {
+        redirect("/onboarding");
+        return;
+      }
+      setUserStats(stats);
+
+      const fetchedTasks = await getTasks();
+      setTasks(fetchedTasks as Task[]);
+      
+      setLoading(false);
+    }
+
+    loadData();
+  }, []);
+
+  const refreshStats = async () => {
+    const stats = await getUserStats();
+    if (stats) {
+      setUserStats(stats);
+    }
+  };
+
+  const handleToggleTask = async (taskId: string) => {
+    await toggleTaskStatus(taskId);
+    await refreshStats();
+    setTaskRefreshKey(k => k + 1);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-canvas ml-12 flex items-center justify-center">
+        <div className="animate-pulse text-faint text-sm font-medium">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!userStats) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-canvas text-text selection:bg-accent-muted">
-      <AppSidebar userEmail={user.email!} />
+      <AppSidebar userEmail={userEmail} />
 
       <main className="ml-12 max-w-4xl mx-auto px-8 py-10 space-y-8">
         <section>
@@ -33,7 +117,10 @@ export default async function DashboardPage() {
         </section>
 
         <section>
-          <DashboardCommandWrapper />
+          <DashboardCommandWrapper onTaskCreated={() => {
+            setTaskRefreshKey(k => k + 1);
+            refreshStats();
+          }} />
         </section>
 
         <section>
@@ -41,6 +128,14 @@ export default async function DashboardPage() {
             stats={userStats.stats}
             level={userStats.level}
             xpProgress={userStats.xpProgress}
+          />
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold text-text mb-4">Active Commands</h2>
+          <TaskStackWrapper 
+            refreshKey={taskRefreshKey} 
+            onStatusToggled={refreshStats}
           />
         </section>
 
