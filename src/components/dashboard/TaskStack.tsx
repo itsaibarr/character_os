@@ -51,7 +51,7 @@ function computeXp(task: Task): number {
 
 function formatDueDate(dateStr: string): { label: string; className: string } {
   const due = new Date(dateStr);
-  const dueMidnight = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+  const dueMidnight = new Date(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate());
   const now = new Date();
   const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const diff = Math.round((dueMidnight.getTime() - todayMidnight.getTime()) / 86_400_000);
@@ -64,7 +64,7 @@ function formatDueDate(dateStr: string): { label: string; className: string } {
   };
 }
 
-const DIFFICULTY_LABEL: Record<string, string> = {
+const DIFFICULTY_LABEL: Record<Task["difficulty"], string> = {
   low: "Simple",
   medium: "Moderate",
   high: "Advanced",
@@ -160,7 +160,7 @@ function TaskRow({
   );
 }
 
-export default function TaskStack({ tasks, allTasks, onToggleStatus }: TaskStackProps) {
+export default function TaskStack({ tasks, allTasks, onToggleStatus, onSelectTask }: TaskStackProps) {
   if (tasks.length === 0) {
     return (
       <p className="text-sm text-faint py-4">No active commands.</p>
