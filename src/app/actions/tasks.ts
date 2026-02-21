@@ -503,6 +503,13 @@ export async function toggleTaskStatus(taskId: string) {
           });
       }
 
+      // Increment daily completed count for heatmap
+      const today = new Date().toISOString().split('T')[0];
+      await supabase.rpc('increment_daily_completed', {
+        p_user_id: user.id,
+        p_date: today,
+      });
+
       // 3. RNG Loot Roll
       let lootMessage = "";
       const isBossTask = task.boss_id !== null && task.boss_id !== undefined;
