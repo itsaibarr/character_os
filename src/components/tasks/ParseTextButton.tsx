@@ -20,13 +20,16 @@ export default function ParseTextButton({ onTasksAdded }: ParseTextButtonProps) 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleToggle = () => {
-    setOpen((v) => !v);
-    if (!open) {
-      setTimeout(() => textareaRef.current?.focus(), 150);
-    } else {
-      setText("");
-      setParsedTasks(null);
-    }
+    setOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setTimeout(() => textareaRef.current?.focus(), 150);
+      } else {
+        setText("");
+        setParsedTasks(null);
+      }
+      return next;
+    });
   };
 
   const handleParse = () => {

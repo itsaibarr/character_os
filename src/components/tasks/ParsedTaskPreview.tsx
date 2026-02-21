@@ -49,24 +49,28 @@ export default function ParsedTaskPreview({
     if (selectedCount === 0) return;
 
     startTransition(async () => {
-      const toAdd = tasks.filter((_, i) => selected.has(i));
+      try {
+        const toAdd = tasks.filter((_, i) => selected.has(i));
 
-      await Promise.all(
-        toAdd.map((t) =>
-          createTask(t.content, {
-            description: t.description,
-            due_date: t.due_date,
-            priority: t.priority,
-            difficulty: t.difficulty,
-          }),
-        ),
-      );
+        await Promise.all(
+          toAdd.map((t) =>
+            createTask(t.content, {
+              description: t.description,
+              due_date: t.due_date,
+              priority: t.priority,
+              difficulty: t.difficulty,
+            }),
+          ),
+        );
 
-      toast.success(
-        `${selectedCount} task${selectedCount !== 1 ? "s" : ""} added`,
-        { icon: "⚡" },
-      );
-      onConfirmed();
+        toast.success(
+          `${selectedCount} task${selectedCount !== 1 ? "s" : ""} added`,
+          { icon: "⚡" },
+        );
+        onConfirmed();
+      } catch {
+        toast.error("Failed to add tasks. Please try again.");
+      }
     });
   };
 
@@ -91,7 +95,7 @@ export default function ParsedTaskPreview({
           const isSelected = selected.has(idx);
           return (
             <li
-              key={idx}
+              key={task.content}
               onClick={() => toggle(idx)}
               className={clsx(
                 "flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors",
