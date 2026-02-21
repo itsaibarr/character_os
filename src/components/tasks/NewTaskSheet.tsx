@@ -99,7 +99,7 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
     }
   };
 
-  const SELECT_BASE = "w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all appearance-none";
+  const SELECT_BASE = "w-full bg-white border border-border rounded-lg px-3 py-2 text-sm font-medium text-text focus:outline-none focus:border-accent focus:ring-2 focus:ring-[var(--color-accent-ring)] transition-all appearance-none";
 
   return (
     <AnimatePresence>
@@ -120,8 +120,8 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
           >
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">New Task</div>
-                <h2 className="text-lg font-black tracking-tight text-slate-900">Create Task</h2>
+                <div className="text-[10px] font-bold text-faint uppercase tracking-widest mb-0.5">New Task</div>
+                <h2 className="text-base font-black tracking-tight text-text">Create Task</h2>
               </div>
               <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
                 <X className="w-5 h-5" />
@@ -139,7 +139,7 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
                   value={content}
                   onChange={e => setContent(e.target.value)}
                   placeholder="What needs to be done?"
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  className="w-full bg-white border border-border rounded-lg px-3 py-2.5 text-sm font-medium text-text placeholder:text-faint focus:outline-none focus:border-accent focus:ring-2 focus:ring-[var(--color-accent-ring)] transition-all"
                   required
                 />
               </div>
@@ -151,7 +151,7 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
                   onChange={e => setDescription(e.target.value)}
                   placeholder="Optional context, notes, or steps..."
                   rows={3}
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                  className="w-full bg-white border border-border rounded-lg px-3 py-2.5 text-sm font-medium text-text placeholder:text-faint focus:outline-none focus:border-accent focus:ring-2 focus:ring-[var(--color-accent-ring)] transition-all resize-none"
                 />
               </div>
 
@@ -180,7 +180,7 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
                   type="date"
                   value={dueDate}
                   onChange={e => setDueDate(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  className="w-full bg-white border border-border rounded-lg px-3 py-2 text-sm font-medium text-text focus:outline-none focus:border-accent focus:ring-2 focus:ring-[var(--color-accent-ring)] transition-all"
                 />
               </div>
 
@@ -204,10 +204,10 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
                 <p className="text-sm text-red-500 font-medium bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>
               )}
 
-              {/* AI Analysis Preview */}
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3">
+              {/* XP Preview */}
+              <div className="pt-4 border-t border-border space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AI Preview</h3>
+                  <h3 className="text-[10px] font-bold text-faint uppercase tracking-widest">XP Preview</h3>
                   {isAnalyzing && <Loader2 className="w-3 h-3 text-slate-400 animate-spin" />}
                 </div>
 
@@ -217,9 +217,9 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
                       {Object.entries(analysis.statWeights).map(([stat, weight]) => {
                         if (weight === 0) return null;
                         return (
-                          <div key={stat} className="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded-md shadow-sm">
-                            <span className="text-[10px] font-extrabold text-slate-400 uppercase">{stat}</span>
-                            <span className="text-xs font-bold text-primary">+{weight}</span>
+                          <div key={stat} className="flex items-center gap-1 bg-slate-50 border border-border px-2 py-1 rounded-md">
+                            <span className="text-[10px] font-extrabold text-faint uppercase">{stat}</span>
+                            <span className="text-xs font-bold text-accent">+{weight}</span>
                           </div>
                         );
                       })}
@@ -233,7 +233,7 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Estimated XP</span>
                         <div className="flex items-center gap-1.5">
                            <span className="text-lg font-black text-slate-900">{analysis.estimatedXP}</span>
-                           <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">XP</span>
+                           <span className="text-[10px] font-bold text-accent bg-accent-muted px-1.5 py-0.5 rounded">XP</span>
                         </div>
                       </div>
                       
@@ -262,8 +262,8 @@ export default function NewTaskSheet({ open, onClose, topLevelTasks, onCreated }
                 className={clsx(
                   "flex items-center gap-2 px-5 py-2 text-sm font-bold rounded-lg transition-all",
                   content.trim() && !isSubmitting
-                    ? "bg-primary text-white shadow-md shadow-primary/20 hover:brightness-110 active:scale-95"
-                    : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                    ? "bg-accent text-white hover:brightness-110 active:scale-95"
+                    : "bg-slate-100 text-muted cursor-not-allowed"
                 )}
               >
                 {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
