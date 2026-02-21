@@ -166,12 +166,10 @@ export async function getAnalyticsInsights(): Promise<
       .gte("log_date", thirtyDaysAgoStr);
 
     const avg7d =
-      (logs7d ?? []).reduce((s, l) => s + l.completed_count, 0) /
-      Math.max((logs7d ?? []).length, 1);
+      (logs7d ?? []).reduce((s, l) => s + l.completed_count, 0) / 7;
 
     const avg30d =
-      (logs30d ?? []).reduce((s, l) => s + l.completed_count, 0) /
-      Math.max((logs30d ?? []).length, 1);
+      (logs30d ?? []).reduce((s, l) => s + l.completed_count, 0) / 30;
 
     const burnoutMultiplier =
       avg30d > 0 ? parseFloat((avg7d / avg30d).toFixed(2)) : 1;
