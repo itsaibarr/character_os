@@ -51,8 +51,10 @@ function computeXp(task: Task): number {
 }
 
 function formatDueDate(dateStr: string): { label: string; className: string } {
-  const due = new Date(dateStr);
-  const dueMidnight = new Date(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate());
+  // Extract YYYY-MM-DD from the string to avoid UTC-vs-local timezone shifts.
+  // dateStr can be "2026-02-22", "2026-02-22T00:00:00Z", or "2026-02-22T00:00:00+05:00".
+  const [y, m, d] = dateStr.slice(0, 10).split("-").map(Number);
+  const dueMidnight = new Date(y, m - 1, d);
   const now = new Date();
   const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const diff = Math.round((dueMidnight.getTime() - todayMidnight.getTime()) / 86_400_000);
@@ -60,7 +62,7 @@ function formatDueDate(dateStr: string): { label: string; className: string } {
   if (diff === 0) return { label: "Today", className: "text-amber-500" };
   if (diff === 1) return { label: "Tomorrow", className: "text-text/60" };
   return {
-    label: due.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    label: dueMidnight.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     className: "text-text/60",
   };
 }

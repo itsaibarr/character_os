@@ -78,7 +78,9 @@ function StatBadges({ task, userStats }: { task: Task; userStats?: UserStats | n
 
 function formatDueDate(dateStr: string | null): string | null {
   if (!dateStr) return null;
-  const date = new Date(dateStr);
+  // Extract YYYY-MM-DD to avoid UTC-vs-local timezone shifts.
+  const [y, m, d] = dateStr.slice(0, 10).split("-").map(Number);
+  const date = new Date(y, m - 1, d);
   const now = new Date();
   const diffDays = Math.ceil((date.getTime() - now.setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
   if (diffDays === 0) return "Due today";
@@ -114,7 +116,9 @@ export default function TaskList({ tasks, selectedTaskId, onSelectTask, onToggle
         <AnimatePresence initial={false}>
           {tasks.map((task, index) => {
             const due = formatDueDate(task.due_date);
-            const overdue = task.due_date ? new Date(task.due_date) < new Date(new Date().setHours(0, 0, 0, 0)) : false;
+            const overdue = task.due_date
+              ? (() => { const [y2, m2, d2] = task.due_date.slice(0, 10).split("-").map(Number); return new Date(y2, m2 - 1, d2) < new Date(new Date().setHours(0, 0, 0, 0)); })()
+              : false;
             const isSelected = selectedTaskId === task.id;
 
             return (
